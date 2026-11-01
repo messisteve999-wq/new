@@ -57,14 +57,14 @@ fun renderMessages(ctx: Context, parent: LinearLayout) {
             box.addView(Button(ctx).apply {
                 text = "Envoyer la pièce jointe"; isAllCaps = false
                 setOnClickListener {
-                    // WhatsApp ne accepte pas les médias dans la notification : on ouvre son écran de partage
+                    // WhatsApp n'accepte pas les médias dans la notification : on ouvre son écran de partage
                     val i = Intent(Intent.ACTION_SEND)
                         .setType(m.attachType ?: "*/*")
                         .putExtra(Intent.EXTRA_STREAM, uri)
                         .putExtra(Intent.EXTRA_TEXT, reply.text.toString())
                         .setPackage(m.pkg)
-                        .setClipData(ClipData.newUri(ctx.contentResolver, "média", uri))
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    i.clipData = ClipData.newUri(ctx.contentResolver, "média", uri)
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
                     try {
                         ctx.startActivity(i)
                     } catch (e: Exception) {

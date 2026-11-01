@@ -21,3 +21,6 @@ Non inclus en v1 : assistant IA, paramètres de confidentialité et avancés, en
 ## v5
 - Bulle : glisser pour la déplacer ; un appui ouvre ou ferme la fenêtre.
 - Paramètres > Bulle flottante : interrupteur pour afficher ou arrêter la bulle.
+
+## v6
+- Correction de compilation : MsgViews.kt (Intent.setClipData ne renvoie pas d'Intent, donc chaîne coupée).
