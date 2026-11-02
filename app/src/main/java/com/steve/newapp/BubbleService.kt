@@ -24,7 +24,7 @@ class BubbleService : Service() {
     private lateinit var bubbleParams: WindowManager.LayoutParams
     private var panelRoot: LinearLayout? = null
     private var panelList: LinearLayout? = null
-    private val refresher: () -> Unit = { panelList?.let { renderMessages(this, it) } }
+    private val refresher: () -> Unit = { panelList?.let { renderMessages(this, it, true) } }
 
     private val overlayType: Int
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -169,7 +169,7 @@ class BubbleService : Service() {
         bringBubbleToFront()
 
         Store.listeners.add(refresher)
-        renderMessages(this, list)
+        renderMessages(this, list, true)
     }
 
     private fun removePanel() {
