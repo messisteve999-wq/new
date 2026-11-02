@@ -6,7 +6,7 @@ import java.net.URL
 
 object Gemini {
     // Modifiable dans Paramètres > Avancé. La route doit correspondre à server.js.
-    var endpoint = "https://gemini-server-steve.onrender.com/reply"
+    var endpoint = "http://127.0.0.1:3001/reply"
 
     private fun post(body: JSONObject): JSONObject? = try {
         val conn = URL(endpoint).openConnection() as HttpURLConnection

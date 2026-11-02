@@ -9,17 +9,18 @@ import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import kotlin.math.abs
 
 class BubbleService : Service() {
     private lateinit var wm: WindowManager
     private lateinit var bubbleParams: WindowManager.LayoutParams
-    private var bubbleView: TextView? = null
+    private var bubbleView: View? = null
     private var panel: LinearLayout? = null
     private var panelList: LinearLayout? = null
     private val refresher: () -> Unit = { panelList?.let { renderMessages(this, it) } }
@@ -28,24 +29,32 @@ class BubbleService : Service() {
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 else WindowManager.LayoutParams.TYPE_PHONE
 
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val bubble = TextView(this).apply {
-            text = "S"; textSize = 22f; setTextColor(Color.BLACK); gravity = Gravity.CENTER
+
+        // Bulle noire avec le démon rouge à l'intérieur
+        val bubble = ImageView(this).apply {
+            setImageResource(R.drawable.ic_bubble_demon)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(dp(4), dp(4), dp(4), dp(4))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.WHITE)
-                setStroke(4, Color.BLACK)
+                setColor(Color.BLACK)
             }
         }
-        bubbleParams = WindowManager.LayoutParams(150, 150, overlayType,
+
+        val bubbleSize = dp(40)
+        bubbleParams = WindowManager.LayoutParams(bubbleSize, bubbleSize, overlayType,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.END
-            x = 20; y = 300
+            x = dp(8); y = dp(200)
         }
+
         // Glisser pour déplacer la bulle ; un simple appui ouvre ou ferme la fenêtre
         var startX = 0f; var startY = 0f; var initX = 0; var initY = 0; var moved = false
         bubble.setOnTouchListener { _, e ->
@@ -85,7 +94,7 @@ class BubbleService : Service() {
             Store.listeners.remove(refresher)
             return
         }
-        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(16, 16, 16, 16) }
+        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), dp(8), dp(8), dp(8)) }
         panelList = list
         val close = Button(this).apply { text = "Fermer"; isAllCaps = false; setOnClickListener { togglePanel() } }
         val box = LinearLayout(this).apply {
@@ -94,10 +103,14 @@ class BubbleService : Service() {
             addView(close)
             addView(ScrollView(this@BubbleService).apply { addView(list) })
         }
+        // Fenêtre IA réduite : 230 dp de large, 320 dp de haut, collée en bas à droite
         wm.addView(
             box,
-            WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, 1000, overlayType, 0,
-                PixelFormat.TRANSLUCENT).apply { gravity = Gravity.BOTTOM }
+            WindowManager.LayoutParams(dp(230), dp(320), overlayType, 0,
+                PixelFormat.TRANSLUCENT).apply {
+                gravity = Gravity.BOTTOM or Gravity.END
+                x = dp(8); y = dp(8)
+            }
         )
         panel = box
         Store.listeners.add(refresher)
