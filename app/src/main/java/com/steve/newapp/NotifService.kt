@@ -147,20 +147,24 @@ class NotifService : NotificationListenerService() {
         val action = n.actions?.firstOrNull { it.remoteInputs?.isNotEmpty() == true }
         val msg = Store.Msg(sbn.key, sender, text, action, pkg)
         Store.add(msg)
+        
+                        val mode = Prefs.mode(this)
+                val contactMode = AutoContactsStore.modeFor(this, sender)
 
-               val mode = Prefs.mode(this)
-        if (mode == "suggest" || mode == "auto") {
-            val history = Store.historyFrom(sender).filter { it != text }
-            val allowedToAuto = AutoContactsStore.isAllowedByName(this, sender)
+                // Un contact coché (suggestion ou auto) déclenche l'IA, même si le mode global est désactivé
+                if (contactMode != null || mode == "suggest" || mode == "auto") {
+                    val history = Store.historyFrom(sender).filter { it != text }
 
-            Gemini.ask(text, history, false) { list ->
-                msg.suggestions = list.take(1)
+                    Gemini.ask(text, history, false) { list ->
+                        msg.suggestions = list.take(1)
 
-                if (mode == "auto" && allowedToAuto && msg.suggestions.isNotEmpty() && action != null) {
-                    sendReply(this, action, msg.suggestions[0])
+                        // Réponse envoyée seulement si le contact est en « Auto IA »
+                        if (contactMode == AutoContactsStore.MODE_AUTO &&
+                            msg.suggestions.isNotEmpty() && action != null) {
+                            sendReply(this, action, msg.suggestions[0])
+                        }
+                    }
                 }
-            }
-        }
         Store.refresh()
     }
 }

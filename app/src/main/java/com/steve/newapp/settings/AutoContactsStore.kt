@@ -4,26 +4,30 @@ import android.content.Context
 
 object AutoContactsStore {
     private const val PREFS = "new_prefs"
-    private const val KEY = "auto_allowed_numbers"
+    private const val KEY = "contact_modes"
 
-    fun getAllowed(context: Context): Set<String> =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    const val MODE_AUTO = "auto"
+    const val MODE_SUGGEST = "suggest"
+
+    // Chaque entrée est stockée sous la forme "nom|mode"
+    fun getModes(context: Context): MutableMap<String, String> {
+        val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getStringSet(KEY, emptySet()) ?: emptySet()
-
-    fun setAllowed(context: Context, numbers: Set<String>) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().putStringSet(KEY, numbers).apply()
-    }
-
-    fun normalize(raw: String): String = raw.filter { it.isDigit() }
-
-    fun isAllowed(context: Context, sender: String): Boolean {
-        val s = normalize(sender)
-        if (s.isEmpty()) return false
-        return getAllowed(context).any { allowed ->
-            s.endsWith(allowed) || allowed.endsWith(s)
+        val map = mutableMapOf<String, String>()
+        for (entry in raw) {
+            val i = entry.lastIndexOf('|')
+            if (i > 0) map[entry.substring(0, i)] = entry.substring(i + 1)
         }
+        return map
     }
-    fun isAllowedByName(context: Context, name: String): Boolean =
-    getAllowed(context).contains(name.trim())
+
+    fun setModes(context: Context, modes: Map<String, String>) {
+        val set = modes.map { "${it.key}|${it.value}" }.toSet()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putStringSet(KEY, set).apply()
+    }
+
+    // Retourne "auto", "suggest", ou null si le contact n'est pas coché
+    fun modeFor(context: Context, senderName: String): String? =
+        getModes(context)[senderName.trim()]
 }
