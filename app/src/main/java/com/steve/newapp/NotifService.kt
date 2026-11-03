@@ -30,10 +30,11 @@ object Store {
 
     val items = mutableListOf<Msg>() // le plus récent en premier
     val listeners = mutableSetOf<() -> Unit>()
+    val sent = ArrayDeque<String>() // textes envoyés par l'appli
+
     private val main = Handler(Looper.getMainLooper())
     private var file: File? = null
 
-    // Charge l'historique sauvegardé, une seule fois
     fun init(ctx: Context) {
         if (file != null) return
         val f = File(ctx.filesDir, "messages.json")
@@ -56,7 +57,6 @@ object Store {
                 )
             }
         } catch (e: Exception) {
-            // Fichier illisible : on le met de côté pour ne pas le perdre
             f.renameTo(File(ctx.filesDir, "messages.bak"))
             items.clear()
         }
@@ -88,6 +88,18 @@ object Store {
         refresh()
     }
 
+    // Derniers messages reçus d'un contact, du plus ancien au plus récent
+    fun historyFrom(sender: String, count: Int = 20): List<String> =
+        items.filter { !it.outgoing && it.sender == sender }
+            .take(count)
+            .map { it.text }
+            .reversed()
+
+    fun rememberSent(text: String) {
+        sent.addFirst(text)
+        while (sent.size > 50) sent.removeLast()
+    }
+
     fun refresh() {
         main.post { listeners.toList().forEach { it() } }
     }
@@ -99,6 +111,7 @@ fun sendReply(ctx: Context, action: Notification.Action, text: String): Boolean 
     val intent = Intent()
     RemoteInput.addResultsToIntent(action.remoteInputs, intent, bundle)
     action.actionIntent.send(ctx, 0, intent)
+    Store.rememberSent(text)
     true
 } catch (e: Exception) {
     false
@@ -118,6 +131,9 @@ class NotifService : NotificationListenerService() {
         val text = n.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: return
         val sender = n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: "WhatsApp"
 
+        // Ignore les notifications de tes propres messages envoyés
+        if (sender == "Vous" || sender == "You" || Store.sent.contains(text)) return
+
         // WhatsApp republie la même notification : on évite les doublons
         if (Store.items.any { it.key == sbn.key && it.text == text }) return
 
@@ -127,9 +143,12 @@ class NotifService : NotificationListenerService() {
 
         val mode = Prefs.mode(this)
         if (mode == "suggest" || mode == "auto") {
-            Gemini.ask(text) { list ->
-                msg.suggestions = list
-                if (mode == "auto" && list.isNotEmpty() && action != null) sendReply(this, action, list[0])
+            val history = Store.historyFrom(sender).filter { it != text }
+            Gemini.ask(text, history, false) { list ->
+                msg.suggestions = list.take(1)
+                if (mode == "auto" && msg.suggestions.isNotEmpty() && action != null) {
+                    sendReply(this, action, msg.suggestions[0])
+                }
                 Store.refresh()
             }
         }
