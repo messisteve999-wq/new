@@ -1,5 +1,6 @@
 package com.steve.newapp
 
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -15,25 +16,38 @@ object Gemini {
         conn.connectTimeout = 15000
         conn.readTimeout = 60000
         conn.setRequestProperty("Content-Type", "application/json")
-        conn.outputStream.use { it.write(body.toString().toByteArray()) }
-        JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
+        conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+        JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
     } catch (e: Exception) {
         null
     }
 
-    fun ask(message: String, cb: (List<String>) -> Unit) {
+    // Une seule suggestion, basée sur l'historique des notifications.
+    // Si fromMe = true, le serveur ne répond pas (message envoyé par Steve).
+    fun ask(
+        message: String,
+        history: List<String> = emptyList(),
+        fromMe: Boolean = false,
+        cb: (List<String>) -> Unit
+    ) {
         Thread {
-            val j = post(JSONObject().put("message", message).put("mode", "suggestions"))
-            val arr = j?.optJSONArray("suggestions")
-            cb(if (arr != null) (0 until arr.length()).map { arr.getString(it) }
-               else listOfNotNull(j?.optString("reply")?.takeIf { it.isNotEmpty() }))
+            val body = JSONObject()
+                .put("message", message)
+                .put("history", JSONArray(history))
+                .put("mode", "suggestions")
+                .put("from_me", fromMe)
+            val reply = post(body)?.optString("reply")?.trim().orEmpty()
+            cb(if (reply.isNotEmpty()) listOf(reply) else emptyList())
         }.start()
     }
 
     fun chat(prompt: String, cb: (String) -> Unit) {
         Thread {
-            val j = post(JSONObject().put("message", prompt).put("mode", "chat"))
-            cb(j?.optString("reply")?.takeIf { it.isNotEmpty() } ?: "Pas de réponse du serveur Gemini.")
+            val body = JSONObject()
+                .put("message", prompt)
+                .put("mode", "reply")
+            val reply = post(body)?.optString("reply")?.trim().orEmpty()
+            cb(reply.ifEmpty { "Pas de réponse du serveur Gemini." })
         }.start()
     }
 }
