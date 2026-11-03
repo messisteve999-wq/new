@@ -152,8 +152,12 @@ class NotifService : NotificationListenerService() {
             val history = Store.historyFrom(sender).filter { it != text }
             Gemini.ask(text, history, false) { list ->
                 msg.suggestions = list.take(1)
-                if (mode == "auto" && msg.suggestions.isNotEmpty() && action != null) {
-                    sendReply(this, action, msg.suggestions[0])
+                val sender = sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+                val allowedToAuto = AutoContactsStore.isAllowed(this, sender)
+
+               if (mode == "auto" && allowedToAuto && msg.suggestions.isNotEmpty() && action != null) {
+                sendReply(this, action, msg.suggestions[0])
+}
                 }
                 Store.refresh()
             }

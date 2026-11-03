@@ -1,11 +1,8 @@
-object AutoContactsStore {
-    import com.steve.new.settings.AutoContactsStore
+package com.steve.newapp.settings
 
-if (autoModeOn && AutoContactsStore.isAllowed(this, sender)) {
-    sendAutoReply(sender, message)
-} else {
-    showSuggestionOnly(sender, message)
-}
+import android.content.Context
+
+object AutoContactsStore {
     private const val PREFS = "new_prefs"
     private const val KEY = "auto_allowed_numbers"
 
@@ -22,6 +19,7 @@ if (autoModeOn && AutoContactsStore.isAllowed(this, sender)) {
 
     fun isAllowed(context: Context, sender: String): Boolean {
         val s = normalize(sender)
+        if (s.isEmpty()) return false
         return getAllowed(context).any { allowed ->
             s.endsWith(allowed) || allowed.endsWith(s)
         }
