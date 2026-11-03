@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
+        <activity android:name="com.steve.newapp.settings.AutoContactsActivity" android:exported="false" />
         android:usesCleartextTraffic="true"
         android:label="new"
         android:icon="@mipmap/ic_launcher"
