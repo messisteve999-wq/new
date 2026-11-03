@@ -1,16 +1,18 @@
 package com.steve.newapp.settings
 
+import android.app.Activity
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.ArrayAdapter
-import android.widget.CheckedTextView
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
-import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
+import com.steve.newapp.R
 
-class AutoContactsActivity : AppCompatActivity() {
+class AutoContactsActivity : Activity() {
 
     private lateinit var allNames: List<String>
     private lateinit var shown: MutableList<String>
@@ -36,7 +38,7 @@ class AutoContactsActivity : AppCompatActivity() {
             if (selected.contains(name)) selected.remove(name) else selected.add(name)
         }
 
-        findViewById<EditText>(R.id.searchInput).addTextChangedListener(object : android.text.TextWatcher {
+        findViewById<EditText>(R.id.searchInput).addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {
                 val q = s?.toString() ?: ""
@@ -45,7 +47,7 @@ class AutoContactsActivity : AppCompatActivity() {
                 adapter.notifyDataSetChanged()
                 refreshChecks(list)
             }
-            override fun afterTextChanged(s: android.text.Editable?) {}
+            override fun afterTextChanged(s: Editable?) {}
         })
 
         findViewById<Button>(R.id.btnSelectAll).setOnClickListener {
