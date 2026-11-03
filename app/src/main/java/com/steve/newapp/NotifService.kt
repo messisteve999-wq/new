@@ -100,6 +100,12 @@ object Store {
         while (sent.size > 50) sent.removeLast()
     }
 
+    fun deleteWhere(p: (Msg) -> Boolean) {
+        items.removeAll(p)
+        save()
+        refresh()
+    }
+
     fun refresh() {
         main.post { listeners.toList().forEach { it() } }
     }

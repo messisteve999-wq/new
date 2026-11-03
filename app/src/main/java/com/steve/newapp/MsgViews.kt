@@ -64,6 +64,10 @@ private fun renderList(ctx: Context, parent: LinearLayout, dark: Boolean) {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(ctx.dp(12), ctx.dp(10), ctx.dp(12), ctx.dp(10))
             setOnClickListener { openChat = k; Store.refresh() }
+            setOnLongClickListener {
+                doDelete(ctx) { Store.deleteWhere { conversationKey(it) == k } }
+                true
+            }
         }
         row.addView(
             TextView(ctx).apply {
@@ -147,6 +151,10 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                 setTextColor(Color.WHITE)
                 setPadding(ctx.dp(14), ctx.dp(9), ctx.dp(14), ctx.dp(9))
                 background = rounded(ctx, Color.parseColor(if (m.outgoing) RED else BUBBLE_IN), 18)
+                setOnLongClickListener {
+                    doDelete(ctx) { Store.deleteWhere { it === m } }
+                    true
+                }
             },
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 gravity = if (m.outgoing) Gravity.END else Gravity.START
@@ -190,6 +198,9 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             Gemini.ask(lastIn.text) { list -> lastIn.suggestions = list; Store.refresh() }
         }
         lastIn.suggestions.forEach { s -> addChip(s) { input.setText(s) } }
+    }
+    addChip("🗑 Supprimer") {
+        doDelete(ctx) { openChat = null; Store.deleteWhere { conversationKey(it) == k } }
     }
     parent.addView(HorizontalScrollView(ctx).apply {
         isHorizontalScrollBarEnabled = false
@@ -281,4 +292,9 @@ private fun shareAttachment(ctx: Context, pkg: String, uri: Uri, type: String?, 
     } catch (e: Exception) {
         Toast.makeText(ctx, "WhatsApp introuvable", Toast.LENGTH_SHORT).show()
     }
+}
+
+private fun doDelete(ctx: Context, onYes: () -> Unit) {
+    onYes()
+    Toast.makeText(ctx, "Supprimé", Toast.LENGTH_SHORT).show()
 }
