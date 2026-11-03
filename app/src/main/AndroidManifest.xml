@@ -4,14 +4,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
-        <activity android:name="com.steve.newapp.settings.AutoContactsActivity" android:exported="false" />
         android:usesCleartextTraffic="true"
         android:label="new"
         android:icon="@mipmap/ic_launcher"
         android:supportsRtl="true">
+
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +20,8 @@
         <activity android:name=".AssistantActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".MediaPickActivity" android:exported="false" />
+        <activity android:name="com.steve.newapp.settings.AutoContactsActivity" android:exported="false" />
+
         <service
             android:name=".NotifService"
             android:exported="true"
