@@ -1,5 +1,6 @@
 package com.steve.newapp
 
+import com.steve.newapp.settings.AutoContactsStore
 import android.app.Notification
 import android.app.RemoteInput
 import android.content.Context
@@ -147,20 +148,19 @@ class NotifService : NotificationListenerService() {
         val msg = Store.Msg(sbn.key, sender, text, action, pkg)
         Store.add(msg)
 
-        val mode = Prefs.mode(this)
+               val mode = Prefs.mode(this)
         if (mode == "suggest" || mode == "auto") {
             val history = Store.historyFrom(sender).filter { it != text }
+            val allowedToAuto = AutoContactsStore.isAllowed(this, sender)
+
             Gemini.ask(text, history, false) { list ->
                 msg.suggestions = list.take(1)
-                val sender = sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-                val allowedToAuto = AutoContactsStore.isAllowed(this, sender)
 
-               if (mode == "auto" && allowedToAuto && msg.suggestions.isNotEmpty() && action != null) {
-                sendReply(this, action, msg.suggestions[0])
-}
+                if (mode == "auto" && allowedToAuto && msg.suggestions.isNotEmpty() && action != null) {
+                    sendReply(this, action, msg.suggestions[0])
                 }
-                Store.refresh()
             }
         }
+        Store.refresh()
     }
 }
