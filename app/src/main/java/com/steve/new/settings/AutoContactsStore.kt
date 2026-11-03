@@ -1,4 +1,11 @@
 object AutoContactsStore {
+    import com.steve.new.settings.AutoContactsStore
+
+if (autoModeOn && AutoContactsStore.isAllowed(this, sender)) {
+    sendAutoReply(sender, message)
+} else {
+    showSuggestionOnly(sender, message)
+}
     private const val PREFS = "new_prefs"
     private const val KEY = "auto_allowed_numbers"
 
