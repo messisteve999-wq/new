@@ -24,4 +24,6 @@ object AutoContactsStore {
             s.endsWith(allowed) || allowed.endsWith(s)
         }
     }
+    fun isAllowedByName(context: Context, name: String): Boolean =
+    getAllowed(context).contains(name.trim())
 }

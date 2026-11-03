@@ -18,13 +18,13 @@ fun AutoContactsScreen(
         )
         Row(Modifier.padding(vertical = 8.dp)) {
             TextButton(onClick = {
-                selected = contacts.map { AutoContactsStore.normalize(it.second) }.toSet()
+                                selected = contacts.map { it.first.trim() }.toSet()
             }) { Text("Tout sélectionner") }
             TextButton(onClick = { selected = emptySet() }) { Text("Tout désélectionner") }
         }
         LazyColumn(Modifier.weight(1f)) {
             items(filtered) { (name, number) ->
-                val key = AutoContactsStore.normalize(number)
+                val key = name.trim()
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically

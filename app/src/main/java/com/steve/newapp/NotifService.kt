@@ -151,7 +151,7 @@ class NotifService : NotificationListenerService() {
                val mode = Prefs.mode(this)
         if (mode == "suggest" || mode == "auto") {
             val history = Store.historyFrom(sender).filter { it != text }
-            val allowedToAuto = AutoContactsStore.isAllowed(this, sender)
+            val allowedToAuto = AutoContactsStore.isAllowedByName(this, sender)
 
             Gemini.ask(text, history, false) { list ->
                 msg.suggestions = list.take(1)
