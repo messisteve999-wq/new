@@ -147,24 +147,31 @@ class NotifService : NotificationListenerService() {
         val action = n.actions?.firstOrNull { it.remoteInputs?.isNotEmpty() == true }
         val msg = Store.Msg(sbn.key, sender, text, action, pkg)
         Store.add(msg)
-        
-                        val mode = Prefs.mode(this)
-                val contactMode = AutoContactsStore.modeFor(this, sender)
 
-                // Un contact coché (suggestion ou auto) déclenche l'IA, même si le mode global est désactivé
-                if (contactMode != null || mode == "suggest" || mode == "auto") {
-                    val history = Store.historyFrom(sender).filter { it != text }
+        val mode = Prefs.mode(this)
+        val contactMode = AutoContactsStore.modeFor(this, sender)
 
-                    Gemini.ask(text, history, false) { list ->
-                        msg.suggestions = list.take(1)
+        // Réglage par contact : "manual" = aucune IA, "suggest" ou "auto" = IA,
+        // sans réglage (null) = on suit le mode global
+        val useAi = when (contactMode) {
+            null -> mode == "suggest" || mode == "auto"
+            "manual" -> false
+            else -> true
+        }
 
-                        // Réponse envoyée seulement si le contact est en « Auto IA »
-                        if (contactMode == AutoContactsStore.MODE_AUTO &&
-                            msg.suggestions.isNotEmpty() && action != null) {
-                            sendReply(this, action, msg.suggestions[0])
-                        }
-                    }
+        if (useAi) {
+            val history = Store.historyFrom(sender).filter { it != text }
+
+            Gemini.ask(text, history, false) { list ->
+                msg.suggestions = list.take(1)
+
+                // Envoi automatique seulement pour un contact en Auto
+                if (contactMode == AutoContactsStore.MODE_AUTO &&
+                    msg.suggestions.isNotEmpty() && action != null) {
+                    sendReply(this, action, msg.suggestions[0])
                 }
+            }
+        }
         Store.refresh()
     }
 }
