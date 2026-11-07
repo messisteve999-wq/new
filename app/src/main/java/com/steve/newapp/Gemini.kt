@@ -28,16 +28,19 @@ object Gemini {
         message: String,
         history: List<String> = emptyList(),
         fromMe: Boolean = false,
+        mode: String = "suggestions",
         cb: (List<String>) -> Unit
     ) {
         Thread {
             val body = JSONObject()
                 .put("message", message)
                 .put("history", JSONArray(history))
-                .put("mode", "suggestions")
+                .put("mode", mode)
                 .put("from_me", fromMe)
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
-            cb(if (reply.isNotEmpty()) listOf(reply) else emptyList())
+            val items = if (mode == "questions") reply.lines().map { it.trim() }.filter { it.isNotEmpty() }
+                        else if (reply.isNotEmpty()) listOf(reply) else emptyList()
+            cb(items)
         }.start()
     }
 

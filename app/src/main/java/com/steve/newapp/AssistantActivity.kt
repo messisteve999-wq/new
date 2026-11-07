@@ -36,6 +36,26 @@ class AssistantActivity : Activity() {
                 }
             }
         })
+        root.addView(Button(this).apply {
+            text = "Questions pour mieux la connaître"; isAllCaps = false
+            setOnClickListener {
+                Gemini.ask(
+                    "Aide-moi à poser des questions sincères et respectueuses pour mieux connaître la personne.",
+                    Store.items.filter { !it.outgoing }.take(20).map { it.text }.reversed(),
+                    false,
+                    "questions"
+                ) { list ->
+                    runOnUiThread {
+                        list.forEach { q ->
+                            log.addView(Button(ctx).apply {
+                                text = q; isAllCaps = false
+                                setOnClickListener { input.setText(q) }
+                            })
+                        }
+                    }
+                }
+            }
+        })
         setContentView(root)
     }
 
