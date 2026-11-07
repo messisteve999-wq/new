@@ -113,6 +113,14 @@ object Store {
         refresh()
     }
 
+    private val asked = mutableMapOf<String, MutableList<String>>()
+
+    fun askedTo(sender: String): List<String> = asked[sender].orEmpty().takeLast(40)
+
+    fun rememberAsked(sender: String, list: List<String>) {
+        asked.getOrPut(sender) { mutableListOf() }.addAll(list)
+    }
+
     fun refresh() {
         main.post { listeners.toList().forEach { it() } }
     }
@@ -168,8 +176,9 @@ class NotifService : NotificationListenerService() {
         if (useAi) {
             val history = Store.historyFrom(sender).filter { it != text }
 
-            Gemini.ask(text, history, false) { list ->
+            Gemini.ask(text, history, false, avoid = Store.askedTo(sender)) { list ->
                 msg.suggestions = list.take(1)
+                Store.rememberAsked(sender, msg.suggestions)
 
                 // Envoi automatique seulement pour un contact en Auto
                 if (contactMode == AutoContactsStore.MODE_AUTO &&

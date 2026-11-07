@@ -29,6 +29,7 @@ object Gemini {
         history: List<String> = emptyList(),
         fromMe: Boolean = false,
         mode: String = "suggestions",
+        avoid: List<String> = emptyList(),
         cb: (List<String>) -> Unit
     ) {
         Thread {
@@ -37,6 +38,7 @@ object Gemini {
                 .put("history", JSONArray(history))
                 .put("mode", mode)
                 .put("from_me", fromMe)
+                .put("avoid", JSONArray(avoid))
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
             val items = if (mode == "questions") reply.lines().map { it.trim() }.filter { it.isNotEmpty() }
                         else if (reply.isNotEmpty()) listOf(reply) else emptyList()
