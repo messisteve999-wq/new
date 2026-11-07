@@ -12,6 +12,7 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -144,10 +145,38 @@ class BubbleService : Service() {
             addView(close)
         }
         val scroll = ScrollView(this).apply { addView(list) }
+        val phoneField = EditText(this).apply {
+            hint = "Numéro (ex. 237...)"
+            inputType = android.text.InputType.TYPE_CLASS_PHONE
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+        }
+        val msgField = EditText(this).apply {
+            hint = "Message"
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+        }
+        val sendBtn = TextView(this).apply {
+            text = "Envoyer"
+            setTextColor(Color.WHITE)
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+            setBackgroundColor(Color.parseColor("#FF1744"))
+            setOnClickListener {
+                ManualSend.open(this@BubbleService, phoneField.text.toString(), msgField.text.toString())
+            }
+        }
+        val sendBar = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), 0, dp(12), dp(8))
+            addView(phoneField)
+            addView(msgField)
+            addView(sendBtn)
+        }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = glassBackground(24)
             addView(header)
+            addView(sendBar)
             addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         }
 
