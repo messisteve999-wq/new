@@ -31,7 +31,13 @@ object Store {
 
     val items = mutableListOf<Msg>() // le plus récent en premier
     val listeners = mutableSetOf<() -> Unit>()
-    val sent = ArrayDeque<String>() // textes envoyés par l'appli
+    val sent = ArrayDeque<String>()
+    val APPS = setOf(
+        "com.whatsapp", "com.whatsapp.w4b",
+        "com.facebook.orca", "com.facebook.katana",
+        "com.snapchat.android",
+        "com.google.android.apps.messaging", "com.android.mms", "com.samsung.android.messaging"
+    ) // textes envoyés par l'appli
 
     private val main = Handler(Looper.getMainLooper())
     private var file: File? = null
@@ -132,7 +138,7 @@ class NotifService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val pkg = sbn.packageName
-        if (pkg != "com.whatsapp" && pkg != "com.whatsapp.w4b") return
+        if (pkg !in Store.APPS) return
         if (pkg == "com.whatsapp.w4b" && !Prefs.bool(this, "include_business", true)) return
         val n = sbn.notification
         val text = n.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: return
