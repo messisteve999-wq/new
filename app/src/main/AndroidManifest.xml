@@ -31,5 +31,6 @@
             </intent-filter>
         </service>
         <service android:name=".BubbleService" android:exported="false" />
-    </application>
+        <activity android:name=".ConnectedAppsActivity" />
+</application>
 </manifest>

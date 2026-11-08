@@ -21,6 +21,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val ctx = this
+        Gemini.lang = Prefs.text(ctx, "lang", "fr")
         Prefs.text(ctx, "server_url").takeIf { it.isNotEmpty() }?.let { Gemini.endpoint = it }
 
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(40, 40, 40, 40) }
@@ -48,6 +49,24 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply {
             text = "Paramètres"; isAllCaps = false
             setOnClickListener { startActivity(Intent(ctx, SettingsActivity::class.java)) }
+        })
+        root.addView(Button(this).apply {
+            text = "Applications connectées"; isAllCaps = false
+            setOnClickListener { startActivity(Intent(ctx, ConnectedAppsActivity::class.java)) }
+        })
+        root.addView(Button(this).apply {
+            text = "Langue IA : ${Gemini.lang}"; isAllCaps = false
+            setOnClickListener {
+                val order = listOf("fr", "en", "el", "ja")
+                val next = order[(order.indexOf(Gemini.lang) + 1) % order.size]
+                Gemini.lang = next
+                Prefs.setText(ctx, "lang", next)
+                text = "Langue IA : $next"
+            }
+        })
+        root.addView(Button(this).apply {
+            text = "Applications connectées"; isAllCaps = false
+            setOnClickListener { startActivity(Intent(ctx, ConnectedAppsActivity::class.java)) }
         })
         val bg = EditText(this).apply { hint = "Couleur de fond (ex. #FFFFFF)"; setText(Prefs.bg(ctx)); setTextColor(Color.BLACK) }
         root.addView(bg)

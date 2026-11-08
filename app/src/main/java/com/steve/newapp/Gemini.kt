@@ -8,6 +8,7 @@ import java.net.URL
 object Gemini {
     // Modifiable dans Paramètres > Avancé. La route doit correspondre à server.js.
     var endpoint = "http://127.0.0.1:3001/reply"
+    var lang = "fr"
 
     private fun post(body: JSONObject): JSONObject? = try {
         val conn = URL(endpoint).openConnection() as HttpURLConnection
@@ -38,6 +39,7 @@ object Gemini {
                 .put("history", JSONArray(history))
                 .put("mode", mode)
                 .put("from_me", fromMe)
+                .put("lang", lang)
                 .put("avoid", JSONArray(avoid))
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
             val items = if (mode == "questions") reply.lines().map { it.trim() }.filter { it.isNotEmpty() }
@@ -51,6 +53,7 @@ object Gemini {
             val body = JSONObject()
                 .put("message", prompt)
                 .put("mode", "reply")
+                .put("lang", lang)
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
             cb(reply.ifEmpty { "Pas de réponse du serveur Gemini." })
         }.start()

@@ -146,7 +146,7 @@ class NotifService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val pkg = sbn.packageName
-        if (pkg !in Store.APPS) return
+        if (pkg !in Store.APPS || !Prefs.bool(this, "app_$pkg", true)) return
         if (pkg == "com.whatsapp.w4b" && !Prefs.bool(this, "include_business", true)) return
         val n = sbn.notification
         val text = n.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: return
