@@ -22,6 +22,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val ctx = this
         Gemini.lang = Prefs.text(ctx, "lang", "fr")
+        Gemini.personality = Prefs.text(ctx, "personality", "connaissance")
         Prefs.text(ctx, "server_url").takeIf { it.isNotEmpty() }?.let { Gemini.endpoint = it }
 
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(40, 40, 40, 40) }

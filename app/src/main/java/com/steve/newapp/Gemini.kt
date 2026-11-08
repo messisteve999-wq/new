@@ -9,6 +9,7 @@ object Gemini {
     // Modifiable dans Paramètres > Avancé. La route doit correspondre à server.js.
     var endpoint = "http://127.0.0.1:3001/reply"
     var lang = "fr"
+    var personality = "connaissance"
 
     private fun post(body: JSONObject): JSONObject? = try {
         val conn = URL(endpoint).openConnection() as HttpURLConnection
@@ -39,6 +40,7 @@ object Gemini {
                 .put("history", JSONArray(history))
                 .put("mode", mode)
                 .put("from_me", fromMe)
+                .put("personality", personality)
                 .put("lang", lang)
                 .put("avoid", JSONArray(avoid))
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
@@ -53,6 +55,7 @@ object Gemini {
             val body = JSONObject()
                 .put("message", prompt)
                 .put("mode", "reply")
+                .put("personality", personality)
                 .put("lang", lang)
             val reply = post(body)?.optString("reply")?.trim().orEmpty()
             cb(reply.ifEmpty { "Pas de réponse du serveur Gemini." })

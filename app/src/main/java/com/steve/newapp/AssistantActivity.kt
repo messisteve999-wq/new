@@ -56,8 +56,19 @@ class AssistantActivity : Activity() {
                 }
             }
         })
+        root.addView(Button(this).apply {
+            text = personalityLabel(); isAllCaps = false
+            setOnClickListener {
+                Gemini.personality = if (Gemini.personality == "connaissance") "serieux" else "connaissance"
+                Prefs.setText(ctx, "personality", Gemini.personality)
+                text = personalityLabel()
+            }
+        })
         setContentView(root)
     }
+
+    private fun personalityLabel(): String =
+        if (Gemini.personality == "connaissance") "Personnalité : faire connaissance" else "Personnalité : sérieux"
 
     private fun addLine(ctx: Context, s: String) {
         log.addView(TextView(ctx).apply { text = s; setTextColor(Color.BLACK); setPadding(0, 12, 0, 12) })
