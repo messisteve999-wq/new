@@ -114,11 +114,37 @@ object Store {
     }
 
     private val asked = mutableMapOf<String, MutableList<String>>()
+    private var askedFile: File? = null
+
+    fun loadAsked(ctx: Context) {
+        val f = File(ctx.filesDir, "asked.json")
+        askedFile = f
+        if (!f.exists()) return
+        try {
+            val o = JSONObject(f.readText())
+            for (k in o.keys()) {
+                val a = o.getJSONArray(k)
+                asked[k] = MutableList(a.length()) { a.getString(it) }
+            }
+        } catch (e: Exception) {
+        }
+    }
+
+    private fun saveAsked() {
+        val f = askedFile ?: return
+        val o = JSONObject()
+        asked.forEach { (k, v) -> o.put(k, JSONArray(v)) }
+        try {
+            f.writeText(o.toString())
+        } catch (e: Exception) {
+        }
+    }
 
     fun askedTo(sender: String): List<String> = asked[sender].orEmpty().takeLast(40)
 
     fun rememberAsked(sender: String, list: List<String>) {
         asked.getOrPut(sender) { mutableListOf() }.addAll(list)
+        saveAsked()
     }
 
     fun refresh() {
@@ -142,6 +168,7 @@ class NotifService : NotificationListenerService() {
     override fun onCreate() {
         super.onCreate()
         Store.init(this)
+        Store.loadAsked(this)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {

@@ -59,6 +59,7 @@ async function callGemini(prompt, retries = 3) {
 
 const FAREWELL = /repose[- ]toi|bon courage|au revoir|bonne (journée|soirée|nuit)|excellente (journée|soirée|nuit)|à bientôt|bonne route|bonne continuation/i;
 const PERSONA = {
+  debat: "Objectif : exprimer poliment un avis différent seulement si le sujet s'y prête, avec un argument court et clair. Une seule fois par sujet. Ne cite personne, sauf les phrases que l'utilisateur a fournies. Reste respectueux et ouvert, sans moquerie ni insistance.",
   connaissance: "Objectif : faire connaissance. Commente brièvement la réponse précédente de la personne, puis ouvre vers une autre question différente de celles déjà posées.",
   serieux: "Objectif : garder le contact de façon sérieuse et utile. Réponds ou questionne de façon pertinente en t'appuyant sur l'historique, sans répéter une question déjà posée."
 };
@@ -88,6 +89,7 @@ function buildPrompt(message, history, mode, avoid = [], lang = "fr", personalit
   return (
     `${style}\n${task}\n\n` +
     (mode === "brouillon" ? (PERSONA[personality] || PERSONA.connaissance) + "\n\n" : "") +
+    (mode === "brouillon" ? "Règles strictes : réponds uniquement au sujet du dernier message de la personne, en t'appuyant sur l'historique. Ne change jamais de sujet. Ne repose jamais une question déjà posée. Si le sujet est terminé ou s'il n'y a plus rien à dire, réponds uniquement VIDE.\n\n" : "") +
     (avoid.length ? "Ne répète jamais ces questions ou idées déjà posées à cette personne :\n" + avoid.slice(-40).map((a) => "- " + String(a).slice(0, 200)).join("\n") + "\n\n" : "") +
     (past ? `Historique récent des notifications :\n${past}\n\n` : "") +
     (mode === "questions" ? "Écris la question maintenant." : `Message reçu : ${message}`)
@@ -117,6 +119,9 @@ const server = http.createServer((req, res) => {
           return res.end(JSON.stringify({ error: "message manquant" }));
         }
 
+        if (mode === "brouillon" && /c\s*['’]?\s*est tout|on en reste là|fin du sujet|pas plus à dire|c'est clos/i.test(message)) {
+          return res.end(JSON.stringify({ reply: "" }));
+        }
         let reply = await callGemini(buildPrompt(message, history, mode, avoid, lang, personality));
         if (FAREWELL.test(reply)) {
           reply = await callGemini(
@@ -133,6 +138,15 @@ const server = http.createServer((req, res) => {
             .map((x) => x.trim())
             .filter((x) => x.length > 3 && !avoid.includes(x));
           reply = found.length ? found[found.length - 1] : "";
+        }
+        if (mode === "brouillon") {
+          if (/^VIDE$/i.test(reply.trim())) reply = "";
+          const norm = (x) => String(x).toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, "").trim();
+          const dup = avoid.some((a) => norm(a).length > 10 && norm(reply).includes(norm(a).slice(0, 25)));
+          if (dup && reply) {
+            reply = await callGemini(buildPrompt(message, history, mode, avoid, lang, personality) + "\n\nNe repose aucune question de la liste à éviter. Pose une autre question sur le dernier message, ou réponds VIDE.");
+            if (/^VIDE$/i.test(reply.trim())) reply = "";
+          }
         }
         res.end(JSON.stringify({ reply }));
       } catch (e) {
