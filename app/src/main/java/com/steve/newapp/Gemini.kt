@@ -32,6 +32,8 @@ object Gemini {
         fromMe: Boolean = false,
         mode: String = "suggestions",
         avoid: List<String> = emptyList(),
+        lang: String = Gemini.lang,
+        personality: String = Gemini.personality,
         cb: (List<String>) -> Unit
     ) {
         Thread {

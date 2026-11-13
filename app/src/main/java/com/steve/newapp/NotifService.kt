@@ -203,7 +203,7 @@ class NotifService : NotificationListenerService() {
         if (useAi) {
             val history = Store.historyFrom(sender).filter { it != text }
 
-            Gemini.ask(text, history, false, avoid = Store.askedTo(sender)) { list ->
+            Gemini.ask(text, history, false, avoid = Store.askedTo(sender), lang = Prefs.text(this, "lang_$sender", Gemini.lang), personality = Prefs.text(this, "persona_$sender", Gemini.personality)) { list ->
                 msg.suggestions = list.take(1)
                 Store.rememberAsked(sender, msg.suggestions)
 

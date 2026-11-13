@@ -192,6 +192,21 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             }
         )
     }
+    val contactName = msgs.lastOrNull()?.sender ?: ""
+    if (contactName.isNotEmpty()) {
+        val langs = listOf("fr", "en", "el", "ja")
+        addChip("Langue : " + Prefs.text(ctx, "lang_$contactName", Gemini.lang)) {
+            val cur = Prefs.text(ctx, "lang_$contactName", Gemini.lang)
+            Prefs.setText(ctx, "lang_$contactName", langs[(langs.indexOf(cur) + 1).mod(langs.size)])
+            Store.refresh()
+        }
+        val personas = listOf("connaissance", "serieux", "debat")
+        addChip("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
+            val cur = Prefs.text(ctx, "persona_$contactName", Gemini.personality)
+            Prefs.setText(ctx, "persona_$contactName", personas[(personas.indexOf(cur) + 1).mod(personas.size)])
+            Store.refresh()
+        }
+    }
     if (lastIn != null) {
         addChip("✨ Gemini") {
             Toast.makeText(ctx, "Gemini réfléchit…", Toast.LENGTH_SHORT).show()
