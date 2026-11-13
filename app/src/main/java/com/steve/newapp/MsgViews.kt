@@ -198,19 +198,25 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
         addChip("Langue : " + Prefs.text(ctx, "lang_$contactName", Gemini.lang)) {
             val cur = Prefs.text(ctx, "lang_$contactName", Gemini.lang)
             Prefs.setText(ctx, "lang_$contactName", langs[(langs.indexOf(cur) + 1).mod(langs.size)])
+            lastIn?.let { regenerate(ctx, it, contactName) }
             Store.refresh()
         }
         val personas = listOf("connaissance", "serieux", "debat")
         addChip("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
             val cur = Prefs.text(ctx, "persona_$contactName", Gemini.personality)
             Prefs.setText(ctx, "persona_$contactName", personas[(personas.indexOf(cur) + 1).mod(personas.size)])
+            lastIn?.let { regenerate(ctx, it, contactName) }
             Store.refresh()
         }
     }
     if (lastIn != null) {
         addChip("✨ Gemini") {
             Toast.makeText(ctx, "Gemini réfléchit…", Toast.LENGTH_SHORT).show()
-            Gemini.ask(lastIn.text) { list -> lastIn.suggestions = list; Store.refresh() }
+            Gemini.ask(lastIn.text, mode = "brouillon",
+                lang = Prefs.text(ctx, "lang_$contactName", Gemini.lang),
+                personality = Prefs.text(ctx, "persona_$contactName", Gemini.personality)) { list ->
+                lastIn.suggestions = list; Store.refresh()
+            }
         }
         lastIn.suggestions.forEach { s -> addChip(s) { input.setText(s) } }
     }
@@ -312,4 +318,14 @@ private fun shareAttachment(ctx: Context, pkg: String, uri: Uri, type: String?, 
 private fun doDelete(ctx: Context, onYes: () -> Unit) {
     onYes()
     Toast.makeText(ctx, "Supprimé", Toast.LENGTH_SHORT).show()
+}
+
+// Recalcule le brouillon du dernier message avec la langue et la personnalité du contact
+private fun regenerate(ctx: Context, m: Store.Msg, contact: String) {
+    Gemini.ask(m.text, mode = "brouillon",
+        lang = Prefs.text(ctx, "lang_$contact", Gemini.lang),
+        personality = Prefs.text(ctx, "persona_$contact", Gemini.personality)) { list ->
+        m.suggestions = list
+        Store.refresh()
+    }
 }
