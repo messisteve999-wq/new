@@ -218,7 +218,25 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                 lastIn.suggestions = list; Store.refresh()
             }
         }
-        lastIn.suggestions.forEach { s -> addChip(s) { input.setText(s) } }
+        lastIn.suggestions.forEach { s ->
+            addChip(s) { input.setText(s) }
+            chips.getChildAt(chips.childCount - 1).setOnLongClickListener {
+                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("suggestion", s))
+                Toast.makeText(ctx, "Suggestion copiée", Toast.LENGTH_SHORT).show()
+                true
+            }
+        }
+        addChip("🔄 Autre suggestion") {
+            Toast.makeText(ctx, "Nouvelle suggestion…", Toast.LENGTH_SHORT).show()
+            Gemini.ask(lastIn.text, mode = "brouillon",
+                avoid = lastIn.suggestions,
+                lang = Prefs.text(ctx, "lang_$contactName", Gemini.lang),
+                personality = Prefs.text(ctx, "persona_$contactName", Gemini.personality)) { list ->
+                if (list.isNotEmpty()) lastIn.suggestions = list
+                Store.refresh()
+            }
+        }
     }
     addChip("🗑 Supprimer") {
         doDelete(ctx) { openChat = null; Store.deleteWhere { conversationKey(it) == k } }
