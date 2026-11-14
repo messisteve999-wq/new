@@ -21,6 +21,8 @@ import java.util.Locale
 
 // Discussion ouverte (clé "appli|expéditeur"), null = liste des discussions
 private var openChat: String? = null
+// Vrai quand le texte a déjà été traduit à la main : on l'envoie sans nouvelle traduction
+private var skipTranslate = false
 
 private const val RED = "#FF1744"
 private const val BUBBLE_IN = "#262633"
@@ -214,6 +216,25 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
         )
     }
     val contactName = msgs.lastOrNull()?.sender ?: ""
+    for (code in listOf("fr", "en", "el", "ja")) {
+        addChip("→ " + code.uppercase()) {
+            val text = input.text.toString().trim()
+            if (text.isEmpty()) {
+                Toast.makeText(ctx, "Écris d'abord ton message", Toast.LENGTH_SHORT).show()
+                return@addChip
+            }
+            Gemini.translate(text, code) { out ->
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    if (out.isNotEmpty()) {
+                        input.setText(out)
+                        skipTranslate = true
+                    } else {
+                        Toast.makeText(ctx, "Traduction impossible", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
     if (contactName.isNotEmpty()) {
         val langs = listOf("fr", "en", "el", "ja")
         addChip("Langue : " + Prefs.text(ctx, "lang_$contactName", Gemini.lang)) {
@@ -371,6 +392,10 @@ private fun regenerate(ctx: Context, m: Store.Msg, contact: String) {
 
 // Envoie dans la langue du contact : traduit si la langue n'est pas le français
 private fun sendLocalized(ctx: Context, act: android.app.Notification.Action, text: String, contact: String): Boolean {
+    if (skipTranslate) {
+        skipTranslate = false
+        return sendReply(ctx, act, text)
+    }
     val lang = Prefs.text(ctx, "lang_$contact", Gemini.lang)
     if (lang == "fr") return sendReply(ctx, act, text)
     Gemini.translate(text, lang) { out ->
