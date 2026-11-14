@@ -161,6 +161,27 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                 setMargins(0, ctx.dp(3), 0, ctx.dp(3))
             }
         )
+        if (!m.outgoing) {
+            messages.addView(
+                TextView(ctx).apply {
+                    text = m.translation?.let { "🌐 $it" } ?: "🌐 Traduire en français"
+                    textSize = 12f
+                    setTextColor(Color.parseColor("#9AA0A6"))
+                    setPadding(ctx.dp(14), 0, ctx.dp(14), ctx.dp(4))
+                    setOnClickListener {
+                        if (m.translation != null) return@setOnClickListener
+                        Toast.makeText(ctx, "Traduction…", Toast.LENGTH_SHORT).show()
+                        Gemini.translate(m.text, "fr") { t ->
+                            m.translation = t.ifEmpty { "(traduction indisponible)" }
+                            Store.refresh()
+                        }
+                    }
+                },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    gravity = Gravity.START
+                }
+            )
+        }
     }
     parent.addView(messages)
 
@@ -294,7 +315,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                     Toast.makeText(ctx, "Réponse impossible : notification expirée", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                if (sendReply(ctx, act, text)) {
+                if (sendLocalized(ctx, act, text, target.sender)) {
                     val now = System.currentTimeMillis()
                     Store.add(
                         Store.Msg(
@@ -346,4 +367,15 @@ private fun regenerate(ctx: Context, m: Store.Msg, contact: String) {
         m.suggestions = list
         Store.refresh()
     }
+}
+
+// Envoie dans la langue du contact : traduit si la langue n'est pas le français
+private fun sendLocalized(ctx: Context, act: android.app.Notification.Action, text: String, contact: String): Boolean {
+    val lang = Prefs.text(ctx, "lang_$contact", Gemini.lang)
+    if (lang == "fr") return sendReply(ctx, act, text)
+    Gemini.translate(text, lang) { out ->
+        val toSend = out.ifEmpty { text }
+        android.os.Handler(android.os.Looper.getMainLooper()).post { sendReply(ctx, act, toSend) }
+    }
+    return true
 }

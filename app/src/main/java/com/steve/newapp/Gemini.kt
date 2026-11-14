@@ -52,6 +52,16 @@ object Gemini {
         }.start()
     }
 
+    fun translate(text: String, target: String, cb: (String) -> Unit) {
+        Thread {
+            val body = JSONObject()
+                .put("message", text)
+                .put("mode", "traduire")
+                .put("lang", target)
+            cb(post(body)?.optString("reply")?.trim().orEmpty())
+        }.start()
+    }
+
     fun chat(prompt: String, cb: (String) -> Unit) {
         Thread {
             val body = JSONObject()

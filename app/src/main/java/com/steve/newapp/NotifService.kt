@@ -26,7 +26,8 @@ object Store {
         var attachment: Uri? = null,
         var attachType: String? = null,
         val time: Long = System.currentTimeMillis(),
-        val outgoing: Boolean = false
+        val outgoing: Boolean = false,
+        var translation: String? = null
     )
 
     val items = mutableListOf<Msg>() // le plus récent en premier

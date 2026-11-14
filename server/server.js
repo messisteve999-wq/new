@@ -124,6 +124,10 @@ const server = http.createServer((req, res) => {
         if (mode === "brouillon" && /c\s*['’]?\s*est tout|on en reste là|fin du sujet|pas plus à dire|c'est clos/i.test(message)) {
           return res.end(JSON.stringify({ reply: "" }));
         }
+        if (mode === "traduire") {
+          const t = await callGemini(`Traduis le texte suivant en ${LANGS[lang] || "français"}. Réponds uniquement par la traduction, sans guillemets ni explication.\n\nTexte : ${message}`);
+          return res.end(JSON.stringify({ reply: t.trim() }));
+        }
         let reply = await callGemini(buildPrompt(message, history, mode, avoid, lang, personality));
         if (FAREWELL.test(reply)) {
           reply = await callGemini(
