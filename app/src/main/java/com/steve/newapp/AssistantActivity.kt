@@ -59,7 +59,8 @@ class AssistantActivity : Activity() {
         root.addView(Button(this).apply {
             text = personalityLabel(); isAllCaps = false
             setOnClickListener {
-                Gemini.personality = if (Gemini.personality == "connaissance") "serieux" else "connaissance"
+                val order = listOf("connaissance", "serieux", "debat", "chaleureux")
+                Gemini.personality = order[(order.indexOf(Gemini.personality) + 1) % order.size]
                 Prefs.setText(ctx, "personality", Gemini.personality)
                 text = personalityLabel()
             }
@@ -68,7 +69,12 @@ class AssistantActivity : Activity() {
     }
 
     private fun personalityLabel(): String =
-        if (Gemini.personality == "connaissance") "Personnalité : faire connaissance" else "Personnalité : sérieux"
+        when (Gemini.personality) {
+            "serieux" -> "Personnalité : sérieux"
+            "debat" -> "Personnalité : débat sincère"
+            "chaleureux" -> "Personnalité : chaleureuse et douce"
+            else -> "Personnalité : faire connaissance"
+        }
 
     private fun addLine(ctx: Context, s: String) {
         log.addView(TextView(ctx).apply { text = s; setTextColor(Color.BLACK); setPadding(0, 12, 0, 12) })

@@ -201,7 +201,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             lastIn?.let { regenerate(ctx, it, contactName) }
             Store.refresh()
         }
-        val personas = listOf("connaissance", "serieux", "debat")
+        val personas = listOf("connaissance", "serieux", "debat", "chaleureux")
         addChip("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
             val cur = Prefs.text(ctx, "persona_$contactName", Gemini.personality)
             Prefs.setText(ctx, "persona_$contactName", personas[(personas.indexOf(cur) + 1).mod(personas.size)])
