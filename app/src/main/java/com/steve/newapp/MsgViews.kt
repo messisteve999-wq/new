@@ -216,12 +216,35 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
         )
     }
     val contactName = msgs.lastOrNull()?.sender ?: ""
+    val optMenu = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = android.view.View.GONE
+        setPadding(ctx.dp(10), 0, ctx.dp(10), ctx.dp(6))
+    }
+    fun addOpt(label: String, onTap: () -> Unit) {
+        optMenu.addView(
+            TextView(ctx).apply {
+                text = label
+                setTextColor(Color.WHITE)
+                textSize = 14f
+                setPadding(ctx.dp(14), ctx.dp(10), ctx.dp(14), ctx.dp(10))
+                background = rounded(ctx, Color.parseColor("#33FF1744"), 12)
+                setOnClickListener { onTap() }
+            },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0, ctx.dp(3), 0, ctx.dp(3))
+            }
+        )
+    }
+    addChip("⚙ Options") {
+        optMenu.visibility = if (optMenu.visibility == android.view.View.VISIBLE) android.view.View.GONE else android.view.View.VISIBLE
+    }
     for (code in listOf("fr", "en", "el", "ja")) {
-        addChip("→ " + code.uppercase()) {
+        addOpt("→ " + code.uppercase()) {
             val text = input.text.toString().trim()
             if (text.isEmpty()) {
                 Toast.makeText(ctx, "Écris d'abord ton message", Toast.LENGTH_SHORT).show()
-                return@addChip
+                return@addOpt
             }
             Gemini.translate(text, code) { out ->
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -237,14 +260,14 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
     }
     if (contactName.isNotEmpty()) {
         val langs = listOf("fr", "en", "el", "ja")
-        addChip("Langue : " + Prefs.text(ctx, "lang_$contactName", Gemini.lang)) {
+        addOpt("Langue : " + Prefs.text(ctx, "lang_$contactName", Gemini.lang)) {
             val cur = Prefs.text(ctx, "lang_$contactName", Gemini.lang)
             Prefs.setText(ctx, "lang_$contactName", langs[(langs.indexOf(cur) + 1).mod(langs.size)])
             lastIn?.let { regenerate(ctx, it, contactName) }
             Store.refresh()
         }
         val personas = listOf("connaissance", "serieux", "debat", "chaleureux")
-        addChip("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
+        addOpt("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
             val cur = Prefs.text(ctx, "persona_$contactName", Gemini.personality)
             Prefs.setText(ctx, "persona_$contactName", personas[(personas.indexOf(cur) + 1).mod(personas.size)])
             lastIn?.let { regenerate(ctx, it, contactName) }
@@ -283,6 +306,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
     addChip("🗑 Supprimer") {
         doDelete(ctx) { openChat = null; Store.deleteWhere { conversationKey(it) == k } }
     }
+    parent.addView(optMenu)
     parent.addView(HorizontalScrollView(ctx).apply {
         isHorizontalScrollBarEnabled = false
         addView(chips)
