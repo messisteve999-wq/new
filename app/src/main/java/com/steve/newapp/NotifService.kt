@@ -27,7 +27,8 @@ object Store {
         var attachType: String? = null,
         val time: Long = System.currentTimeMillis(),
         val outgoing: Boolean = false,
-        var translation: String? = null
+        var translation: String? = null,
+        var pending: Runnable? = null
     )
 
     val items = mutableListOf<Msg>() // le plus récent en premier
@@ -148,6 +149,13 @@ object Store {
         saveAsked()
     }
 
+    fun later(ms: Long, r: Runnable) { main.postDelayed(r, ms) }
+
+    fun cancel(m: Msg) {
+        m.pending?.let { main.removeCallbacks(it) }
+        m.pending = null
+    }
+
     fun refresh() {
         main.post { listeners.toList().forEach { it() } }
     }
@@ -211,7 +219,14 @@ class NotifService : NotificationListenerService() {
                 // Envoi automatique seulement pour un contact en Auto
                 if (contactMode == AutoContactsStore.MODE_AUTO &&
                     msg.suggestions.isNotEmpty() && action != null) {
-                    sendReply(this, action, msg.suggestions[0])
+                    val delayMs = (Prefs.text(this, "auto_delay", "60").toLongOrNull() ?: 60L).coerceIn(0L, 120L) * 1000L
+                    val r = Runnable {
+                        msg.pending = null
+                        sendReply(this, action, msg.suggestions[0])
+                        Store.refresh()
+                    }
+                    msg.pending = r
+                    Store.later(delayMs, r)
                 }
             }
         }

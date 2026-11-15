@@ -59,11 +59,10 @@ async function callGemini(prompt, retries = 3) {
 
 const FAREWELL = /repose[- ]toi|bon courage|au revoir|bonne (journée|soirée|nuit)|excellente (journée|soirée|nuit)|à bientôt|bonne route|bonne continuation/i;
 const PERSONA = {
-  chaleureux: "Objectif : écrire un message chaleureux, doux et sincère, pour prendre des nouvelles et montrer de l'attention à la personne. Sans sous-entendu amoureux, sans compliment appuyé, sans drague. Une seule attention par message.",
-  chaleureux: "Objectif : écrire un message chaleureux, doux et sincère, pour prendre des nouvelles et montrer de l'attention à la personne. Sans sous-entendu amoureux, sans compliment appuyé, sans drague. Une seule attention par message.",
-  debat: "Objectif : exprimer poliment un avis différent seulement si le sujet s'y prête, avec un argument court et clair. Une seule fois par sujet. Ne cite personne, sauf les phrases que l'utilisateur a fournies. Reste respectueux et ouvert, sans moquerie ni insistance.",
-  connaissance: "Objectif : faire connaissance. Commente brièvement la réponse précédente de la personne, puis ouvre vers une autre question différente de celles déjà posées.",
-  serieux: "Objectif : garder le contact de façon sérieuse et utile. Réponds ou questionne de façon pertinente en t'appuyant sur l'historique, sans répéter une question déjà posée."
+  connaissance: "Ton : curieux et chaleureux. Réagis en une phrase à ce qu'elle a dit, puis pose UNE question nouvelle sur elle (goûts, quotidien, projets).",
+  serieux: "Ton : sobre et utile. Réponds au fond du message avec un point concret, puis pose UNE question précise sur le sujet. Pas de remarques personnelles.",
+  debat: "Ton : direct et poli. Exprime un avis différent sur un point précis, avec une raison concrète en une phrase. Ne pose AUCUNE question. Ne critique jamais la personne.",
+  chaleureux: "Ton : doux et attentionné. Prends des nouvelles avec gentillesse, exprime une attention sincère, puis une question douce. Pas de sous-entendu amoureux."
 };
 const LANGS = { fr: "français", en: "anglais", el: "grec", ja: "japonais" };
 

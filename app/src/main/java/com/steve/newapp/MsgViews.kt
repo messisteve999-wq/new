@@ -274,6 +274,14 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             Store.refresh()
         }
     }
+    if (lastIn?.pending != null) {
+        addChip("⏸ Annuler l'envoi auto") {
+            lastIn?.let { Store.cancel(it) }
+            Prefs.setMode(ctx, "suggest")
+            Toast.makeText(ctx, "Envoi auto annulé, mode suggestions", Toast.LENGTH_SHORT).show()
+            Store.refresh()
+        }
+    }
     if (lastIn != null) {
         addChip("✨ Gemini") {
             Toast.makeText(ctx, "Gemini réfléchit…", Toast.LENGTH_SHORT).show()

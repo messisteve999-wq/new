@@ -103,6 +103,13 @@ class MainActivity : Activity() {
             Prefs.setMode(this, next)
             t.text = modeLabel()
         })
+        menuBox.addView(pill("Délai avant envoi auto : ${Prefs.text(this, "auto_delay", "60")} s") { t ->
+            val opts = listOf("0", "30", "60", "120")
+            val cur = Prefs.text(this, "auto_delay", "60")
+            val next = opts[(opts.indexOf(cur) + 1) % opts.size]
+            Prefs.setText(this, "auto_delay", next)
+            t.text = "Délai avant envoi auto : $next s"
+        })
         menuBox.addView(pill("Assistant IA") {
             startActivity(Intent(this, AssistantActivity::class.java))
         })
