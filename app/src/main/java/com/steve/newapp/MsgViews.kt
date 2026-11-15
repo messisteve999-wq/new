@@ -266,13 +266,6 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             lastIn?.let { regenerate(ctx, it, contactName) }
             Store.refresh()
         }
-        val personas = listOf("connaissance", "chaleureux")
-        addOpt("Personnalité : " + Prefs.text(ctx, "persona_$contactName", Gemini.personality)) {
-            val cur = Prefs.text(ctx, "persona_$contactName", Gemini.personality)
-            Prefs.setText(ctx, "persona_$contactName", personas[(personas.indexOf(cur) + 1).mod(personas.size)])
-            lastIn?.let { regenerate(ctx, it, contactName) }
-            Store.refresh()
-        }
     }
     if (lastIn?.pending != null) {
         addChip("⏸ Annuler l'envoi auto") {

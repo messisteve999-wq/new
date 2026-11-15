@@ -56,15 +56,6 @@ class AssistantActivity : Activity() {
                 }
             }
         })
-        root.addView(Button(this).apply {
-            text = personalityLabel(); isAllCaps = false
-            setOnClickListener {
-                val order = listOf("connaissance", "chaleureux")
-                Gemini.personality = order[(order.indexOf(Gemini.personality) + 1) % order.size]
-                Prefs.setText(ctx, "personality", Gemini.personality)
-                text = personalityLabel()
-            }
-        })
         setContentView(root)
     }
 
