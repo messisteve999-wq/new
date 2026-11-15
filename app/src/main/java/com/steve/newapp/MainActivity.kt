@@ -110,6 +110,14 @@ class MainActivity : Activity() {
             Prefs.setText(this, "auto_delay", next)
             t.text = "Délai avant envoi auto : $next s"
         })
+        menuBox.addView(pill("Personnalité IA : ${Personality.label(Gemini.personality)}") { t ->
+            val ids = Personality.ids
+            val index = ids.indexOf(Gemini.personality)
+            val next = ids[((if (index < 0) -1 else index) + 1) % ids.size]
+            Gemini.personality = next
+            Prefs.setText(this, "personality", next)
+            t.text = "Personnalité IA : ${Personality.label(next)}"
+        })
         menuBox.addView(pill("Assistant IA") {
             startActivity(Intent(this, AssistantActivity::class.java))
         })

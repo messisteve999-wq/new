@@ -267,6 +267,18 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             Store.refresh()
         }
     }
+    if (contactName.isNotEmpty()) {
+        val key = "persona_$contactName"
+        addOpt("Personnalité : " + Personality.label(Prefs.text(ctx, key, Gemini.personality))) {
+            val ids = Personality.ids
+            val current = Prefs.text(ctx, key, Gemini.personality)
+            val index = ids.indexOf(current)
+            val next = ids[((if (index < 0) -1 else index) + 1) % ids.size]
+            Prefs.setText(ctx, key, next)
+            lastIn?.let { regenerate(ctx, it, contactName) }
+            Store.refresh()
+        }
+    }
     if (lastIn?.pending != null) {
         addChip("⏸ Annuler l'envoi auto") {
             lastIn?.let { Store.cancel(it) }

@@ -9,8 +9,8 @@ android {
         applicationId = "com.steve.newapp"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 29
+        versionName = "29.0"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

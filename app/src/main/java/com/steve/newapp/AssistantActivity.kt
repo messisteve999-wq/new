@@ -20,6 +20,18 @@ class AssistantActivity : Activity() {
         val ctx = this
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(40, 40, 40, 40); setBackgroundColor(Color.WHITE) }
         root.addView(TextView(this).apply { text = "Assistant IA"; textSize = 22f; setTextColor(Color.BLACK) })
+        root.addView(Button(this).apply {
+            text = "Personnalité IA : ${Personality.label(Gemini.personality)}"
+            isAllCaps = false
+            setOnClickListener {
+                val ids = Personality.ids
+                val index = ids.indexOf(Gemini.personality)
+                val next = ids[((if (index < 0) -1 else index) + 1) % ids.size]
+                Gemini.personality = next
+                Prefs.setText(ctx, "personality", next)
+                text = "Personnalité IA : ${Personality.label(next)}"
+            }
+        })
         log = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(ScrollView(this).apply { addView(log) }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         val input = EditText(this).apply { hint = "Dites-lui quoi faire…"; setTextColor(Color.BLACK) }
@@ -43,7 +55,8 @@ class AssistantActivity : Activity() {
                     "Aide-moi à poser des questions sincères et respectueuses pour mieux connaître la personne.",
                     Store.items.filter { !it.outgoing }.take(20).map { it.text }.reversed(),
                     false,
-                    "questions"
+                    "questions",
+                    personality = Gemini.personality
                 ) { list ->
                     runOnUiThread {
                         list.forEach { q ->
