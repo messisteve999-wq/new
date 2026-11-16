@@ -163,8 +163,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                 setMargins(0, ctx.dp(3), 0, ctx.dp(3))
             }
         )
-        {
-            messages.addView(
+        messages.addView(
                 TextView(ctx).apply {
                     text = m.translation?.let { "🌐 $it" } ?: "🌐 Traduire en français"
                     textSize = 12f
@@ -183,7 +182,6 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                     gravity = Gravity.START
                 }
             )
-        }
     }
     parent.addView(messages)
 
