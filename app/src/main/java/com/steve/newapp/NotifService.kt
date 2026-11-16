@@ -76,9 +76,15 @@ object Store {
 
     fun add(m: Msg) { items.add(0, m); save(); refresh() }
 
-    fun historyFrom(sender: String, count: Int = 20): List<String> =
-        items.filter { !it.outgoing && it.sender == sender }
-            .take(count).map { it.text }.reversed()
+    // Historique complet : messages reçus et réponses envoyées par NEW.
+    fun historyFrom(sender: String, count: Int = 30): List<String> =
+        items.asSequence()
+            .filter { it.sender.equals(sender, ignoreCase = true) && it.text.isNotBlank() }
+            .sortedByDescending { it.time }
+            .take(count)
+            .toList()
+            .asReversed()
+            .map { if (it.outgoing) "Steve : ${it.text}" else "$sender : ${it.text}" }
 
     private fun normalizeText(value: String) =
         value.lowercase(Locale.ROOT).replace(Regex("\\s+"), " ").trim()

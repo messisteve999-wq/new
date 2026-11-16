@@ -45,9 +45,10 @@ Garde une complicité saine et respectueuse.
         val conn = URL(endpoint).openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
         conn.doOutput = true
-        conn.connectTimeout = 15000
-        conn.readTimeout = 60000
-        conn.setRequestProperty("Content-Type", "application/json")
+        conn.connectTimeout = 9000
+        conn.readTimeout = 45000
+        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+        conn.setRequestProperty("Accept", "application/json")
         conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
 
         val body = JSONObject().put("prompt", prompt)
@@ -142,6 +143,13 @@ $memory
 Utilise ces souvenirs uniquement lorsqu'ils sont utiles.
 Ne les invente pas et ne les présente pas comme des certitudes
 s'ils ne sont pas pertinents pour le message actuel.
+Tiens compte des messages reçus ET des réponses déjà envoyées par Steve.
+Ne répète pas les informations ou questions déjà présentes dans l'historique.
+Ne sois pas automatiquement d'accord : si une affirmation est discutable,
+présente calmement un contre-argument et une raison concrète.
+Reconnais les points valables et ne contredis jamais juste pour contredire.
+N'invente jamais de statistiques, citations, études ou sources.
+Si tu ne connais pas une source fiable, n'affirme pas en citer une.
 
 STYLE :
 Écris un message naturel et cohérent, généralement en une ou deux phrases.
@@ -217,7 +225,7 @@ N'ajoute aucun préambule.
                 post("""
 ${personas[personality] ?: personas["connaissance"]}
 Réponds en ${lang}.
-Réponds naturellement et directement :
+Réponds naturellement et directement. Tu peux nuancer ou contredire poliment une affirmation fausse. N'invente aucune source ni aucun fait :
 $prompt
 """.trimIndent())
             } catch (e: Exception) {
