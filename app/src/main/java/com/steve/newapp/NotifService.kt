@@ -246,13 +246,19 @@ class NotifService : NotificationListenerService() {
                 mode = "brouillon",
                 avoid = Store.askedTo(sender),
                 lang = Prefs.text(this, "lang_$sender", Gemini.lang),
-                personality = persona
+                personality = persona,
+                rules = Prefs.text(this, "rules"),
+                about = Prefs.text(this, "about")
             ) { list ->
                 // Une seule réponse IA pour ce message.
                 msg.suggestions = list.take(1)
                 Store.rememberAsked(sender, msg.suggestions)
 
-                if (contactMode == AutoContactsStore.MODE_AUTO &&
+                val shouldAutoReply =
+                    contactMode == AutoContactsStore.MODE_AUTO ||
+                    (contactMode == null && mode == "auto")
+
+                if (shouldAutoReply &&
                     msg.suggestions.isNotEmpty() && action != null && msg.pending == null) {
                     val delayMs = (Prefs.text(this, "auto_delay", "60").toLongOrNull() ?: 60L)
                         .coerceIn(0L, 120L) * 1000L
