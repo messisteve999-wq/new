@@ -50,7 +50,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Gemini.lang = Prefs.text(this, "lang", "fr")
-        Gemini.personality = Prefs.text(this, "personality", "connaissance")
+        Gemini.personality = Personality.normalize(Prefs.text(this, "personality", "connaissance"))
         Prefs.text(this, "server_url").takeIf { it.isNotEmpty() }?.let { Gemini.endpoint = it }
 
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }

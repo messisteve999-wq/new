@@ -292,7 +292,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             Toast.makeText(ctx, "Gemini réfléchit…", Toast.LENGTH_SHORT).show()
             Gemini.ask(lastIn.text, mode = "brouillon",
                 lang = Prefs.text(ctx, "lang_$contactName", Gemini.lang),
-                personality = Prefs.text(ctx, "persona_$contactName", Gemini.personality)) { list ->
+                personality = Personality.normalize(Prefs.text(ctx, "persona_$contactName", Gemini.personality))) { list ->
                 lastIn.suggestions = list; Store.refresh()
             }
         }
@@ -310,7 +310,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             Gemini.ask(lastIn.text, mode = "brouillon",
                 avoid = lastIn.suggestions,
                 lang = Prefs.text(ctx, "lang_$contactName", Gemini.lang),
-                personality = Prefs.text(ctx, "persona_$contactName", Gemini.personality)) { list ->
+                personality = Personality.normalize(Prefs.text(ctx, "persona_$contactName", Gemini.personality))) { list ->
                 if (list.isNotEmpty()) lastIn.suggestions = list
                 Store.refresh()
             }
@@ -421,7 +421,7 @@ private fun doDelete(ctx: Context, onYes: () -> Unit) {
 private fun regenerate(ctx: Context, m: Store.Msg, contact: String) {
     Gemini.ask(m.text, mode = "brouillon",
         lang = Prefs.text(ctx, "lang_$contact", Gemini.lang),
-        personality = Prefs.text(ctx, "persona_$contact", Gemini.personality)) { list ->
+        personality = Personality.normalize(Prefs.text(ctx, "persona_$contact", Gemini.personality))) { list ->
         m.suggestions = list
         Store.refresh()
     }

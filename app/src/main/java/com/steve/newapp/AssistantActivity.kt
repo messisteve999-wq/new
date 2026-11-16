@@ -72,14 +72,6 @@ class AssistantActivity : Activity() {
         setContentView(root)
     }
 
-    private fun personalityLabel(): String =
-        when (Gemini.personality) {
-            "serieux" -> "Personnalité : sérieux"
-            "debat" -> "Personnalité : débat sincère"
-            "chaleureux" -> "Personnalité : chaleureuse et douce"
-            else -> "Personnalité : faire connaissance"
-        }
-
     private fun addLine(ctx: Context, s: String) {
         log.addView(TextView(ctx).apply { text = s; setTextColor(Color.BLACK); setPadding(0, 12, 0, 12) })
         history.append(s).append("\n")

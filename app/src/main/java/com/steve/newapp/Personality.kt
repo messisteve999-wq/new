@@ -1,26 +1,17 @@
 package com.steve.newapp
 
 object Personality {
-    val ids = listOf(
-        "connaissance",
-        "chaleureux",
-        "romance",
-        "drague",
-        "amical",
-        "humour",
-        "professionnel",
-        "mysterieux"
-    )
+    val ids = listOf("connaissance", "drague", "romance", "mysterieux", "amical")
 
-    fun label(id: String): String = when (id) {
+    fun normalize(id: String?): String =
+        if (id != null && id in ids) id else "connaissance"
+
+    fun label(id: String): String = when (normalize(id)) {
         "connaissance" -> "Faire connaissance"
-        "chaleureux" -> "Chaleureux"
-        "romance" -> "Romantique"
         "drague" -> "Drague amicale"
-        "amical" -> "Amical"
-        "humour" -> "Humoristique"
-        "professionnel" -> "Professionnel"
+        "romance" -> "Romantique"
         "mysterieux" -> "Mystérieux"
+        "amical" -> "Amical"
         else -> "Faire connaissance"
     }
 }

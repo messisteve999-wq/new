@@ -13,32 +13,27 @@ if (!KEY) {
 function callOnce(prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
-    const req = https.request(
-      {
-        hostname: "generativelanguage.googleapis.com",
-        path: `/v1beta/models/${MODEL}:generateContent`,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": KEY,
-          "Content-Length": Buffer.byteLength(body),
-        },
+    const req = https.request({
+      hostname: "generativelanguage.googleapis.com",
+      path: `/v1beta/models/${MODEL}:generateContent`,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": KEY,
+        "Content-Length": Buffer.byteLength(body),
       },
-      (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => {
-          try {
-            const json = JSON.parse(data);
-            const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) return reject(new Error(JSON.stringify(json)));
-            resolve(text.trim());
-          } catch (e) {
-            reject(e);
-          }
-        });
-      }
-    );
+    }, (res) => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          const answer = json.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!answer) return reject(new Error(JSON.stringify(json)));
+          resolve(answer.trim());
+        } catch (e) { reject(e); }
+      });
+    });
     req.on("error", reject);
     req.write(body);
     req.end();
@@ -47,123 +42,139 @@ function callOnce(prompt) {
 
 async function callGemini(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
-    try {
-      return await callOnce(prompt);
-    } catch (e) {
+    try { return await callOnce(prompt); }
+    catch (e) {
       const busy = /UNAVAILABLE|503/.test(e.message);
       if (!busy || i === retries - 1) throw e;
-      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
     }
   }
 }
 
-const FAREWELL = /repose[- ]toi|bon courage|au revoir|bonne (journée|soirée|nuit)|excellente (journée|soirée|nuit)|à bientôt|bonne route|bonne continuation/i;
-const PERSONA = {
-  connaissance: `Tu écris un message au nom de Steve, en une seule fois, dans la langue demandée. Tu es une intelligence artificielle : si la personne demande si elle parle à une IA ou à un robot, tu réponds honnêtement que oui, sans jamais le nier.
-Identité de Steve : il s'appelle Steve, il vit à Yaoundé dans le quartier Odza, il a 28 ans, il est étudiant en imagerie médicale, il aime les échecs, la cuisine et découvrir de nouvelles activités. Il n'aime pas parler de sa famille. Il préfère écouter les autres et apprendre à les connaître.
-Première rencontre : accueille la personne chaleureusement et engage une conversation agréable. Ne commence jamais par une liste de questions.
-Découverte progressive : apprends à connaître la personne petit à petit (études, passions, plats et boissons préférés, musique et films, qualités, rêves, manière de communiquer, ce qui la rend heureuse, ce qu'elle apprécie dans une amitié). Une information à la fois.
-Comportement : sociable, curieuse sans être indiscrète, gentille, drôle, réfléchie et respectueuse. Tu peux plaisanter, taquiner gentiment, et parler de sujets sérieux comme légers.
-Conversation : rebondis sur ce que la personne vient de dire. Ne pose jamais plus d'une question à la fois, et ne reprends jamais une question déjà posée dans l'historique.
-Mémoire : utilise l'historique pour ne pas redemander une information déjà donnée. Ne considère jamais une information comme certaine si la personne ne l'a pas confirmée.
-Évolution : reste poli et curieux au début, puis familier et naturel, puis plus complice avec le temps. Pas de tendresse ni de flirt : ne force jamais une relation ou une intimité.
-Style : langage naturel, pas robotique, quelques emojis naturels, varie les sujets, sache écouter autant que parler, évite les interrogatoires.
-Format : un seul message court, deux phrases maximum, avec une question au plus.`,
-  chaleureux: "Ton : doux et attentionné. Prends des nouvelles avec gentillesse, exprime une attention sincère, puis une question douce. Pas de sous-entendu amoureux, pas de drague. Une seule attention par message.",
-};
 const LANGS = { fr: "français", en: "anglais", el: "grec", ja: "japonais" };
+
+const PERSONA = {
+  connaissance: `PERSONNALITÉ : FAIRE CONNAISSANCE.
+Tu es sociable, curieux et attentif. Tu veux découvrir la personne progressivement, sans transformer la discussion en interrogatoire.
+Rebondis d'abord sur ce qu'elle vient de dire. Pose au maximum une question simple et pertinente à la fois. Varie les sujets : loisirs, musique, cuisine, études, travail, voyages, rêves et petites habitudes.
+Mémorise le contexte fourni dans l'historique et ne redemande pas une information déjà donnée. Ne prétends jamais connaître une information non confirmée. Sois naturel, ouvert et respectueux.`,
+  drague: `PERSONNALITÉ : DRAGUE AMICALE.
+Tu es charmeur, joueur et complice, avec une séduction légère et élégante. Utilise parfois une taquinerie gentille, un compliment précis ou une petite touche d'humour.
+Adapte toujours ton niveau de flirt à la réponse de l'autre personne. Ne sois jamais lourd, insistant, vulgaire ou possessif. Ne suppose jamais que l'autre personne est intéressée. Si elle pose une limite ou n'est pas réceptive, reviens immédiatement à une conversation amicale.
+Garde une conversation vivante, spontanée et respectueuse.`,
+  romance: `PERSONNALITÉ : ROMANTIQUE.
+Tu es tendre, attentionné, délicat et expressif. Tu sais employer des mots affectueux et des images poétiques avec naturel, sans exagération.
+Montre de l'intérêt pour les émotions et les petites choses qui comptent pour l'autre. Fais progresser la tendresse selon la confiance et la réciprocité. Ne déclare pas un amour profond à une personne que tu connais à peine et ne crée jamais de pression affective.
+Reste sincère, doux et respectueux.`,
+  mysterieux: `PERSONNALITÉ : MYSTÉRIEUX.
+Tu es calme, subtil, observateur et intriguant. Tes réponses sont réfléchies, parfois légèrement énigmatiques, avec une pointe de profondeur.
+Tu peux utiliser une formule originale ou une métaphore courte, mais reste toujours compréhensible et réponds réellement au message reçu. Ne sois ni froid, ni obscur, ni artificiellement dramatique.
+Laisse une petite ouverture qui donne envie de poursuivre la conversation, sans jouer avec les sentiments.`,
+  amical: `PERSONNALITÉ : AMICAL.
+Tu es un ami agréable, accessible, spontané et fiable. Tu écoutes, encourages et partages une énergie positive sans en faire trop.
+Tu peux plaisanter naturellement, utiliser une petite taquinerie bienveillante et parler aussi bien de sujets légers que sérieux. Montre de l'intérêt sans être indiscret.
+Adapte ton langage à la personne et garde une complicité saine et respectueuse.`,
+};
 
 function buildPrompt(message, history, mode, avoid = [], lang = "fr", personality = "connaissance") {
   const past = (Array.isArray(history) ? history : [])
-    .slice(-20)
-    .map((h) => `- ${String(h).slice(0, 300)}`)
-    .join("\n");
+    .slice(-20).map(h => `- ${String(h).slice(0, 300)}`).join("\n");
+  const persona = PERSONA[personality] || PERSONA.connaissance;
 
   const style =
-    `Tu réponds à la place de Steve, en ${LANGS[lang] || "français"}. ` +
-    "Réponses courtes (1 à 2 phrases), naturelles et polies. " +
-    "Ton poli, respectueux et chaleureux. Pas de compliments appuyés, pas de drague, pas de message romantique. " +
-    "Ne parle jamais de sa famille. " +
-    "Ne termine jamais par une formule d'au revoir (bonne journée, bonne soirée, bonne nuit, à bientôt) : pose plutôt une question ouverte qui relance la conversation. " +
-    "Imite son style d'après les messages qu'il a déjà envoyés.";
+    `Tu écris au nom de Steve, en ${LANGS[lang] || "français"}. ` +
+    "Steve a 28 ans, vit à Yaoundé (Odza), étudie l’imagerie médicale, aime les échecs, la cuisine et découvrir de nouvelles activités. " +
+    "Écris un seul message final, naturel et cohérent, généralement en une ou deux phrases. " +
+    "Réponds au dernier message et respecte le ton de la conversation. " +
+    "Ne donne ni analyse, ni explication, ni liste, ni plusieurs variantes. " +
+    "Ne termine pas automatiquement par une formule d'au revoir. " +
+    "Ne parle jamais de sa famille. Si on te demande si tu es une IA, réponds honnêtement.";
 
-  const task =
-    mode === "questions"
-      ? "Ne réponds pas au message. Écris uniquement UNE seule question sincère et respectueuse pour mieux connaître la personne qui écrit, sans insister ni sous-entendu. Sans numérotation, sans introduction ni commentaire."
-      : mode === "suggestions"
-      ? "Propose UNE seule suggestion de réponse, sans guillemets ni explication."
-      : "Écris UNE seule réponse, sans guillemets ni explication.";
+  const task = mode === "questions"
+    ? "Écris une seule question sincère et respectueuse pour mieux connaître la personne. Sans introduction."
+    : mode === "suggestions"
+      ? "Écris une seule suggestion de réponse, directement envoyable, sans guillemets."
+      : "Écris une seule réponse directement envoyable, sans guillemets.";
 
-  return (
-    `${style}\n${task}\n\n` +
-    (mode === "brouillon" ? (PERSONA[personality] || PERSONA.connaissance) + "\n\n" : "") +
-    (mode === "brouillon" ? "Règles strictes : réponds uniquement au sujet du dernier message de la personne, en t'appuyant sur l'historique. Ne change jamais de sujet. Ne repose jamais une question déjà posée. Si le sujet est terminé ou s'il n'y a plus rien à dire, réponds uniquement VIDE.\n\n" : "") +
-    (avoid.length ? "Ne répète jamais ces questions ou idées déjà posées à cette personne :\n" + avoid.slice(-40).map((a) => "- " + String(a).slice(0, 200)).join("\n") + "\n\n" : "") +
-    (past ? `Historique récent des notifications :\n${past}\n\n` : "") +
-    (mode === "questions" ? "Écris la question maintenant." : `Message reçu : ${message}`)
-  );
+  const avoidText = avoid.length
+    ? "Évite de répéter ces messages ou questions déjà utilisés :\n" +
+      avoid.slice(-40).map(x => "- " + String(x).slice(0, 200)).join("\n") + "\n"
+    : "";
+
+  const contextRules = mode === "brouillon"
+    ? "Règles supplémentaires : réponds uniquement au sujet du dernier message. Ne change pas de sujet. Ne repose pas une question déjà posée dans l'historique. Si le sujet est réellement terminé, réponds uniquement VIDE. "
+    : "";
+
+  return `${style}\n\n${persona}\n\n${contextRules}${task}\n\n` +
+    (past ? `Historique récent :\n${past}\n\n` : "") +
+    avoidText + `Dernier message reçu : ${message}\n\n` +
+    "Réponds maintenant avec un seul message. N'ajoute aucun préambule.";
 }
+
+const FAREWELL = /repose[- ]toi|au revoir|bonne (journée|soirée|nuit)|excellente (journée|soirée|nuit)|à bientôt|bonne continuation/i;
 
 const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   if (req.method === "GET" && req.url === "/") {
-    return res.end(JSON.stringify({ status: "ok", model: MODEL, version: "V4" }));
+    return res.end(JSON.stringify({ status: "ok", model: MODEL, version: "V30" }));
   }
 
   if (req.method === "POST" && req.url === "/reply") {
     let raw = "";
-    req.on("data", (c) => (raw += c));
+    req.on("data", c => raw += c);
     req.on("end", async () => {
       try {
-        const { message, history = [], mode = "reply", from_me = false, avoid = [], lang = "fr", personality = "connaissance" } =
-          JSON.parse(raw || "{}");
+        const {
+          message, history = [], mode = "reply", from_me = false,
+          avoid = [], lang = "fr", personality = "connaissance"
+        } = JSON.parse(raw || "{}");
 
-        // Ignore les messages envoyés par Steve
         if (from_me) return res.end(JSON.stringify({ reply: "" }));
-
-        if (!message) {
+        if (!message && mode !== "questions") {
           res.statusCode = 400;
           return res.end(JSON.stringify({ error: "message manquant" }));
         }
 
-        if (mode === "brouillon" && /c\s*['’]?\s*est tout|on en reste là|fin du sujet|pas plus à dire|c'est clos/i.test(message)) {
-          return res.end(JSON.stringify({ reply: "" }));
-        }
         if (mode === "traduire") {
-          const t = await callGemini(`Traduis le texte suivant en ${LANGS[lang] || "français"}. Réponds uniquement par la traduction, sans guillemets ni explication.\n\nTexte : ${message}`);
-          return res.end(JSON.stringify({ reply: t.trim() }));
-        }
-        let reply = await callGemini(buildPrompt(message, history, mode, avoid, lang, personality));
-        if (FAREWELL.test(reply)) {
-          reply = await callGemini(
-            buildPrompt(message, history, mode, avoid, lang, personality) +
-            "\n\nNe termine pas par une formule d'au revoir : pose une question ouverte."
+          const translated = await callGemini(
+            `Traduis en ${LANGS[lang] || "français"}. Réponds uniquement par la traduction :\n${message}`
           );
+          return res.end(JSON.stringify({ reply: translated.trim() }));
         }
-        if (FAREWELL.test(reply)) {
-          reply = reply.split(/(?<=[.!?])\s+/).filter((x) => !FAREWELL.test(x)).join(" ").trim();
-        }
-        if (mode === "questions") {
-          // Ne garde que les questions, sans phrase d'introduction ni réponse au message
-          const found = (reply.match(/[^.!?\n]*\?/g) || [])
-            .map((x) => x.trim())
-            .filter((x) => x.length > 3 && !avoid.includes(x));
-          reply = found.length ? found[found.length - 1] : "";
-        }
-        if (mode === "brouillon") {
-          if (/^VIDE$/i.test(reply.trim())) reply = "";
-          const norm = (x) => String(x).toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, "").trim();
-          const dup = avoid.some((a) => norm(a).length > 10 && norm(reply).includes(norm(a).slice(0, 25)));
-          if (dup && reply) {
-            reply = await callGemini(buildPrompt(message, history, mode, avoid, lang, personality) + "\n\nNe repose aucune question de la liste à éviter. Pose une autre question sur le dernier message, ou réponds VIDE.");
-            if (/^VIDE$/i.test(reply.trim())) reply = "";
+
+        let prompt = buildPrompt(message || "", history, mode, avoid, lang, personality);
+        let reply = await callGemini(prompt);
+        reply = reply.replace(/\r/g, "").split(/\n+/).map(x => x.trim()).filter(Boolean).join(" ");
+        reply = reply.replace(/^["'«]+|["'»]+$/g, "").trim();
+
+        if (mode === "brouillon" && /^VIDE$/i.test(reply)) reply = "";
+        if (mode === "brouillon" && reply && Array.isArray(avoid)) {
+          const norm = value => String(value).toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, "").trim();
+          const repeated = avoid.some(item => {
+            const old = norm(item);
+            return old.length > 12 && norm(reply).includes(old.slice(0, 28));
+          });
+          if (repeated) {
+            reply = await callGemini(prompt + "\\n\\nPropose une réponse différente, sans reprendre les questions ou formulations déjà utilisées. Si nécessaire, réponds VIDE.");
+            reply = reply.replace(/\r/g, "").split(/\n+/).map(x => x.trim()).filter(Boolean).join(" ").trim();
+            if (/^VIDE$/i.test(reply)) reply = "";
           }
         }
-        res.end(JSON.stringify({ reply }));
+
+        if (mode === "questions") {
+          const questions = reply.match(/[^.!?\n]*\?/g) || [];
+          reply = questions.length ? questions[0].trim() : "";
+        }
+        if (FAREWELL.test(reply)) {
+          reply = reply.split(/(?<=[.!?])\s+/).filter(x => !FAREWELL.test(x)).join(" ").trim();
+        }
+        if (/^VIDE$/i.test(reply)) reply = "";
+
+        return res.end(JSON.stringify({ reply }));
       } catch (e) {
         res.statusCode = 500;
-        res.end(JSON.stringify({ error: e.message }));
+        return res.end(JSON.stringify({ error: e.message }));
       }
     });
     return;
@@ -174,5 +185,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, "127.0.0.1", () =>
-  console.log(`New serveur V4 sur http://127.0.0.1:${PORT}`)
+  console.log(`New serveur V30 sur http://127.0.0.1:${PORT}`)
 );
