@@ -11,8 +11,8 @@ android {
         applicationId = "com.steve.newapp"
         minSdk = 26
         targetSdk = 34
-        versionCode = 32
-        versionName = "32.0"
+        versionCode = 35
+        versionName = "35.0"
     }
 
     buildFeatures {
