@@ -78,7 +78,8 @@ Garde une complicité saine et respectueuse.
         lang: String,
         personality: String,
         rules: String,
-        about: String
+        about: String,
+        memory: String
     ): String {
         val language = when (lang) {
             "en" -> "anglais"
@@ -115,6 +116,13 @@ $rules
 INFORMATIONS SUR STEVE :
 $about
 
+MÉMOIRE DU CONTACT :
+$memory
+
+Utilise ces souvenirs uniquement lorsqu'ils sont utiles.
+Ne les invente pas et ne les présente pas comme des certitudes
+s'ils ne sont pas pertinents pour le message actuel.
+
 STYLE :
 Écris un message naturel et cohérent, généralement en une ou deux phrases.
 Réponds au dernier message.
@@ -149,6 +157,7 @@ N'ajoute aucun préambule.
         personality: String = Gemini.personality,
         rules: String = "",
         about: String = "",
+        memory: String = "",
         cb: (List<String>) -> Unit
     ) {
         Thread {
@@ -157,7 +166,7 @@ N'ajoute aucun préambule.
                 else {
                     val prompt = buildPrompt(
                         message, history, mode, avoid,
-                        lang, personality, rules, about
+                        lang, personality, rules, about, memory
                     )
                     val reply = post(prompt)
                     if (reply.isBlank() || reply.equals("VIDE", true))

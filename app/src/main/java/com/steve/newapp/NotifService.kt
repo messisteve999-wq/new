@@ -248,7 +248,8 @@ class NotifService : NotificationListenerService() {
                 lang = Prefs.text(this, "lang_$sender", Gemini.lang),
                 personality = persona,
                 rules = Prefs.text(this, "rules"),
-                about = Prefs.text(this, "about")
+                about = Prefs.text(this, "about"),
+                memory = MemoryStore.context(this, sender)
             ) { list ->
                 // Une seule réponse IA pour ce message.
                 msg.suggestions = list.take(1)

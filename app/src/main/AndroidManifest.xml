@@ -19,6 +19,7 @@
         </activity>
         <activity android:name=".AssistantActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".MemoryActivity" android:exported="false" />
         <activity android:name=".MediaPickActivity" android:exported="false" />
         <activity android:name="com.steve.newapp.settings.AutoContactsActivity" android:exported="false" />
 

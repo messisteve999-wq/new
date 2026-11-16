@@ -91,6 +91,15 @@ class SettingsActivity : Activity() {
     }
 }
 col.addView(btnContacts)
+        col.addView(title("Mémoire NEW V32"))
+        col.addView(Button(this).apply {
+            text = "Gérer la mémoire des contacts"
+            isAllCaps = false
+            setOnClickListener {
+                startActivity(Intent(ctx, MemoryActivity::class.java))
+            }
+        })
+
         setContentView(ScrollView(this).apply { addView(col) })
     }
 }
