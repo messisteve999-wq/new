@@ -51,7 +51,8 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         Gemini.lang = Prefs.text(this, "lang", "fr")
         Gemini.personality = Personality.normalize(Prefs.text(this, "personality", "connaissance"))
-        Prefs.text(this, "server_url").takeIf { it.isNotEmpty() }?.let { Gemini.endpoint = it }
+        Prefs.text(this, "server_url").takeIf { it.isNotEmpty() && !it.contains("127.0.0.1") && !it.contains("localhost") }?.let { Gemini.endpoint = it }
+        Gemini.warmUp()
 
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
 

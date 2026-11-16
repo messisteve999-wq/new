@@ -163,7 +163,7 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
                 setMargins(0, ctx.dp(3), 0, ctx.dp(3))
             }
         )
-        if (!m.outgoing) {
+        {
             messages.addView(
                 TextView(ctx).apply {
                     text = m.translation?.let { "🌐 $it" } ?: "🌐 Traduire en français"

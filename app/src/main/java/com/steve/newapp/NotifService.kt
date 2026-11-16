@@ -266,8 +266,23 @@ class NotifService : NotificationListenerService() {
                     val task = Runnable {
                         if (msg.pending == null) return@Runnable
                         msg.pending = null
-                        sendReply(this, action, msg.suggestions.first())
-                        Store.refresh()
+                        val answer = msg.suggestions.first()
+                        if (sendReply(this, action, answer)) {
+                            val now = System.currentTimeMillis()
+                            Store.add(
+                                Store.Msg(
+                                    key = "auto" + now,
+                                    sender = msg.sender,
+                                    text = answer,
+                                    action = null,
+                                    pkg = msg.pkg,
+                                    time = now,
+                                    outgoing = true
+                                )
+                            )
+                        } else {
+                            Store.refresh()
+                        }
                     }
                     msg.pending = task
                     Store.later(delayMs, task)

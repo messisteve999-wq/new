@@ -5,7 +5,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object Gemini {
-    var endpoint = "http://127.0.0.1:8787/v1/generate"
+    var endpoint = "https://my-server-taai.onrender.com/v1/generate"
     var lang = "fr"
     var personality = "connaissance"
 
@@ -68,6 +68,26 @@ Garde une complicité saine et respectueuse.
             throw Exception(json.optString("error", "Erreur MY_SERVER"))
         }
         return json.optString("text").trim()
+    }
+
+
+    fun warmUp() {
+        Thread {
+            try {
+                val healthUrl =
+                    endpoint.removeSuffix("/v1/generate").trimEnd('/') + "/health"
+                val conn = URL(healthUrl).openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
+                val stream = if (conn.responseCode in 200..299)
+                    conn.inputStream else conn.errorStream
+                stream?.use { it.readBytes() }
+                conn.disconnect()
+            } catch (_: Exception) {
+            }
+        }.start()
     }
 
     private fun buildPrompt(
