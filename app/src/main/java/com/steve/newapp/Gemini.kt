@@ -9,6 +9,10 @@ object Gemini {
     var lang = "fr"
     var personality = "connaissance"
 
+    init {
+        warmUp()
+    }
+
     private val personas = mapOf(
         "connaissance" to """
 Tu es sociable, curieux et attentif.
@@ -42,51 +46,99 @@ Garde une complicité saine et respectueuse.
     )
 
     private fun post(prompt: String): String {
-        val conn = URL(endpoint).openConnection() as HttpURLConnection
-        conn.requestMethod = "POST"
-        conn.doOutput = true
-        conn.connectTimeout = 9000
-        conn.readTimeout = 45000
-        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-        conn.setRequestProperty("Accept", "application/json")
-        conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
+        var lastError: Exception? = null
 
-        val body = JSONObject().put("prompt", prompt)
-        conn.outputStream.use {
-            it.write(body.toString().toByteArray(Charsets.UTF_8))
+        for (attempt in 0..2) {
+            var conn: HttpURLConnection? = null
+
+            try {
+                conn = URL(endpoint).openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.doOutput = true
+                conn.connectTimeout = 20000
+                conn.readTimeout = 90000
+                conn.setRequestProperty(
+                    "Content-Type", "application/json; charset=utf-8"
+                )
+                conn.setRequestProperty("Accept", "application/json")
+                conn.setRequestProperty("Connection", "keep-alive")
+                conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
+
+                val body = JSONObject().put("prompt", prompt)
+
+                conn.outputStream.use {
+                    it.write(body.toString().toByteArray(Charsets.UTF_8))
+                }
+
+                val code = conn.responseCode
+
+                if (code in 200..299) {
+                    val response = conn.inputStream.bufferedReader(
+                        Charsets.UTF_8
+                    ).use { it.readText() }
+
+                    val json = JSONObject(response)
+
+                    if (!json.optBoolean("success", false)) {
+                        throw Exception(
+                            json.optString("error", "Erreur MY_SERVER")
+                        )
+                    }
+
+                    return json.optString("text").trim()
+                }
+
+                val error = conn.errorStream?.bufferedReader(
+                    Charsets.UTF_8
+                )?.use { it.readText() }.orEmpty()
+
+                if (code !in listOf(408, 429, 500, 502, 503, 504)) {
+                    throw Exception("MY_SERVER HTTP $code: $error")
+                }
+
+                lastError = Exception("MY_SERVER HTTP $code: $error")
+
+            } catch (e: Exception) {
+                lastError = e
+            } finally {
+                conn?.disconnect()
+            }
+
+            if (attempt < 2) {
+                try {
+                    Thread.sleep(if (attempt == 0) 1000 else 2000)
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw Exception("Connexion interrompue")
+                }
+            }
         }
 
-        val stream = if (conn.responseCode in 200..299)
-            conn.inputStream else conn.errorStream
-
-        val response = stream.bufferedReader(Charsets.UTF_8).use {
-            it.readText()
-        }
-        conn.disconnect()
-
-        val json = JSONObject(response)
-        if (!json.optBoolean("success", false)) {
-            throw Exception(json.optString("error", "Erreur MY_SERVER"))
-        }
-        return json.optString("text").trim()
+        throw lastError ?: Exception("MY_SERVER indisponible")
     }
-
 
     fun warmUp() {
         Thread {
+            var conn: HttpURLConnection? = null
             try {
-                val healthUrl =
-                    endpoint.removeSuffix("/v1/generate").trimEnd('/') + "/health"
-                val conn = URL(healthUrl).openConnection() as HttpURLConnection
+                val healthUrl = endpoint.removeSuffix("/v1/generate")
+                    .trimEnd('/') + "/health"
+
+                conn = URL(healthUrl).openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
-                conn.connectTimeout = 8000
-                conn.readTimeout = 8000
+                conn.connectTimeout = 15000
+                conn.readTimeout = 70000
+                conn.setRequestProperty("Accept", "application/json")
                 conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
-                val stream = if (conn.responseCode in 200..299)
+
+                val code = conn.responseCode
+                val stream = if (code in 200..299)
                     conn.inputStream else conn.errorStream
+
                 stream?.use { it.readBytes() }
-                conn.disconnect()
             } catch (_: Exception) {
+            } finally {
+                conn?.disconnect()
             }
         }.start()
     }

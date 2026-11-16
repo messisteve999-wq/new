@@ -20,7 +20,7 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build NEW V35
+      - name: Build NEW V37
         env:
           NEW_API_KEY: ${{ secrets.NEW_API_KEY }}
         run: gradle assembleDebug --no-daemon
