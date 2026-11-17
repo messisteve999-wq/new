@@ -50,7 +50,7 @@ class BubbleService : Service() {
 
         // Bulle sombre avec le démon rouge et un contour néon
         bubbleView = ImageView(this).apply {
-            setImageResource(R.drawable.ic_dragon_black)
+            setImageResource(R.drawable.new_robot_bubble)
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(dp(8), dp(8), dp(8), dp(8))
             background = GradientDrawable().apply {
@@ -118,18 +118,7 @@ class BubbleService : Service() {
             textSize = 16f
             setTypeface(null, Typeface.BOLD)
         }
-                val modesBtn = TextView(this).apply {
-            text = "⚙"
-            setTextColor(Color.WHITE)
-            textSize = 18f
-            setPadding(dp(8), 0, dp(8), 0)
-            setOnClickListener {
-                val list = panelList ?: return@setOnClickListener
-                list.removeAllViews()
-                list.addView(ContactModesPanel.build(this@BubbleService))
-            }
-        }
-        val close = TextView(this).apply {
+                val close = TextView(this).apply {
             text = "✕"
             setTextColor(Color.WHITE)
             textSize = 18f
@@ -141,7 +130,6 @@ class BubbleService : Service() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(12), dp(8), dp(12))
             addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(modesBtn)
             addView(close)
         }
         val scroll = ScrollView(this).apply { addView(list) }

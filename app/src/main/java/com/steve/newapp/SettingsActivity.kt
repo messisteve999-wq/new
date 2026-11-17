@@ -81,16 +81,6 @@ class SettingsActivity : Activity() {
                 Toast.makeText(ctx, "Enregistré", Toast.LENGTH_SHORT).show()
             }
         })
-        val btnContacts = android.widget.Button(this).apply {
-    text = "Contacts du mode automatique"
-    setOnClickListener {
-        startActivity(
-            android.content.Intent(this@SettingsActivity,
-                com.steve.newapp.settings.AutoContactsActivity::class.java)
-        )
-    }
-}
-col.addView(btnContacts)
         col.addView(title("Mémoire NEW V32"))
         col.addView(Button(this).apply {
             text = "Gérer la mémoire des contacts"

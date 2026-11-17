@@ -186,6 +186,11 @@ object Store {
         m.pending = null
     }
 
+    fun cancelPendingFor(pkg: String, sender: String) {
+        items.filter { it.pkg == pkg && it.sender == sender && !it.outgoing }
+            .forEach { cancel(it) }
+    }
+
     fun refresh() { main.post { listeners.toList().forEach { it() } } }
 }
 
@@ -235,13 +240,9 @@ class NotifService : NotificationListenerService() {
         val msg = Store.Msg(sbn.key, sender, text, action, pkg)
         Store.add(msg)
 
-        val mode = Prefs.mode(this)
-        val contactMode = AutoContactsStore.modeFor(this, sender)
-        val useAi = when (contactMode) {
-            null -> mode == "suggest" || mode == "auto"
-            "manual" -> false
-            else -> true
-        }
+        // Chaque message reçu reçoit des suggestions.
+        // Le mode global ne peut jamais activer l'envoi automatique.
+        val useAi = true
 
         if (useAi) {
             val history = Store.historyFrom(sender).filter { it != text }
@@ -261,16 +262,23 @@ class NotifService : NotificationListenerService() {
                 msg.suggestions = list.take(1)
                 Store.rememberAsked(sender, msg.suggestions)
 
+                // Vérification au moment de la réponse Gemini :
+                // Auto doit toujours être activé pour ce contact précis.
                 val shouldAutoReply =
-                    contactMode == AutoContactsStore.MODE_AUTO ||
-                    (contactMode == null && mode == "auto")
+                    AutoContactsStore.modeFor(this, pkg, sender) ==
+                        AutoContactsStore.MODE_AUTO
 
                 if (shouldAutoReply &&
                     msg.suggestions.isNotEmpty() && action != null && msg.pending == null) {
                     val delayMs = (Prefs.text(this, "auto_delay", "60").toLongOrNull() ?: 60L)
                         .coerceIn(0L, 120L) * 1000L
                     val task = Runnable {
-                        if (msg.pending == null) return@Runnable
+                        if (msg.pending == null ||
+                            AutoContactsStore.modeFor(this, pkg, sender) !=
+                                AutoContactsStore.MODE_AUTO) {
+                            msg.pending = null
+                            return@Runnable
+                        }
                         msg.pending = null
                         val answer = msg.suggestions.first()
                         if (sendReply(this, action, answer)) {

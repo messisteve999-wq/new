@@ -44,7 +44,6 @@ class MainActivity : Activity() {
         return tv
     }
 
-    private fun modeLabel() = "Mode : ${Prefs.mode(this)}"
     private fun langLabel() = "Langue IA : ${Gemini.lang}"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,11 +97,6 @@ class MainActivity : Activity() {
         menuBox.addView(pill("Activer la bulle flottante") { startBubble() })
         menuBox.addView(pill("Autoriser l'accès aux notifications") {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-        })
-        menuBox.addView(pill(modeLabel()) { t ->
-            val next = when (Prefs.mode(this)) { "manual" -> "suggest"; "suggest" -> "auto"; else -> "manual" }
-            Prefs.setMode(this, next)
-            t.text = modeLabel()
         })
         menuBox.addView(pill("Délai avant envoi auto : ${Prefs.text(this, "auto_delay", "60")} s") { t ->
             val opts = listOf("0", "30", "60", "120")

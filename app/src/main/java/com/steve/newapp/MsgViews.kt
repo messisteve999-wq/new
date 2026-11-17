@@ -15,6 +15,7 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.steve.newapp.settings.AutoContactsStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -136,7 +137,39 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
             textSize = 16f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
-        })
+        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+        if (lastIn != null) {
+            val currentMode = AutoContactsStore.modeFor(ctx, lastIn.pkg, lastIn.sender)
+            addView(TextView(ctx).apply {
+                text = if (currentMode == AutoContactsStore.MODE_AUTO) "AUTO" else "Suggestions"
+                textSize = 12f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+                setPadding(ctx.dp(10), ctx.dp(8), ctx.dp(10), ctx.dp(8))
+                background = rounded(
+                    ctx,
+                    Color.parseColor(if (currentMode == AutoContactsStore.MODE_AUTO) RED else "#444455"),
+                    18
+                )
+                setOnClickListener {
+                    val next = if (
+                        AutoContactsStore.modeFor(ctx, lastIn.pkg, lastIn.sender) ==
+                        AutoContactsStore.MODE_AUTO
+                    ) AutoContactsStore.MODE_SUGGEST else AutoContactsStore.MODE_AUTO
+
+                    AutoContactsStore.setMode(ctx, lastIn.pkg, lastIn.sender, next)
+
+                    if (next == AutoContactsStore.MODE_SUGGEST) {
+                        Store.cancelPendingFor(lastIn.pkg, lastIn.sender)
+                        Toast.makeText(ctx, "Mode Suggestions activé", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(ctx, "Mode Auto activé pour ce contact", Toast.LENGTH_SHORT).show()
+                    }
+                    Store.refresh()
+                }
+            })
+        }
     })
 
     // Bulles de messages : reçus à gauche, envoyés à droite
@@ -280,7 +313,6 @@ private fun renderChat(ctx: Context, parent: LinearLayout, k: String) {
     if (lastIn?.pending != null) {
         addChip("⏸ Annuler l'envoi auto") {
             lastIn?.let { Store.cancel(it) }
-            Prefs.setMode(ctx, "suggest")
             Toast.makeText(ctx, "Envoi auto annulé, mode suggestions", Toast.LENGTH_SHORT).show()
             Store.refresh()
         }
