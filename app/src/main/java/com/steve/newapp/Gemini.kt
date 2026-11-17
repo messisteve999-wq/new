@@ -47,22 +47,26 @@ Garde une complicité saine et respectueuse.
 
     private fun post(prompt: String): String {
         var lastError: Exception? = null
+        val retryableHttpCodes = setOf(408, 429, 500, 502, 503, 504)
 
-        for (attempt in 0..2) {
+        for (attempt in 0..1) {
             var conn: HttpURLConnection? = null
 
             try {
                 conn = URL(endpoint).openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.doOutput = true
-                conn.connectTimeout = 20000
+                conn.connectTimeout = 10000
                 conn.readTimeout = 90000
+
                 conn.setRequestProperty(
                     "Content-Type", "application/json; charset=utf-8"
                 )
                 conn.setRequestProperty("Accept", "application/json")
                 conn.setRequestProperty("Connection", "keep-alive")
-                conn.setRequestProperty("x-api-key", BuildConfig.NEW_API_KEY)
+                conn.setRequestProperty(
+                    "x-api-key", BuildConfig.NEW_API_KEY
+                )
 
                 val body = JSONObject().put("prompt", prompt)
 
@@ -71,12 +75,17 @@ Garde une complicité saine et respectueuse.
                 }
 
                 val code = conn.responseCode
+                val stream = if (code in 200..299) {
+                    conn.inputStream
+                } else {
+                    conn.errorStream
+                }
+
+                val response = stream?.bufferedReader(
+                    Charsets.UTF_8
+                )?.use { it.readText() }.orEmpty()
 
                 if (code in 200..299) {
-                    val response = conn.inputStream.bufferedReader(
-                        Charsets.UTF_8
-                    ).use { it.readText() }
-
                     val json = JSONObject(response)
 
                     if (!json.optBoolean("success", false)) {
@@ -88,25 +97,34 @@ Garde une complicité saine et respectueuse.
                     return json.optString("text").trim()
                 }
 
-                val error = conn.errorStream?.bufferedReader(
-                    Charsets.UTF_8
-                )?.use { it.readText() }.orEmpty()
+                val error = Exception("MY_SERVER HTTP $code: $response")
 
-                if (code !in listOf(408, 429, 500, 502, 503, 504)) {
-                    throw Exception("MY_SERVER HTTP $code: $error")
+                if (code !in retryableHttpCodes) {
+                    throw error
                 }
 
-                lastError = Exception("MY_SERVER HTTP $code: $error")
+                lastError = error
 
             } catch (e: Exception) {
+                val httpCode = Regex("""MY_SERVER HTTP (\d+)""")
+                    .find(e.message.orEmpty())
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?.toIntOrNull()
+
+                if (httpCode != null && httpCode !in retryableHttpCodes) {
+                    throw e
+                }
+
                 lastError = e
+
             } finally {
                 conn?.disconnect()
             }
 
-            if (attempt < 2) {
+            if (attempt == 0) {
                 try {
-                    Thread.sleep(if (attempt == 0) 1000 else 2000)
+                    Thread.sleep(600)
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                     throw Exception("Connexion interrompue")
