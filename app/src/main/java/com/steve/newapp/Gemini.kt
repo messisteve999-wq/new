@@ -49,7 +49,7 @@ Garde une complicité saine et respectueuse.
         var lastError: Exception? = null
         val retryableHttpCodes = setOf(408, 429, 500, 502, 503, 504)
 
-        for (attempt in 0..1) {
+        for (attempt in 0..2) {
             var conn: HttpURLConnection? = null
 
             try {
@@ -94,7 +94,11 @@ Garde une complicité saine et respectueuse.
                         )
                     }
 
-                    return json.optString("text").trim()
+                    val generatedText = json.optString("text").trim()
+                    if (generatedText.isBlank()) {
+                        throw Exception("Réponse vide de MY_SERVER")
+                    }
+                    return generatedText
                 }
 
                 val error = Exception("MY_SERVER HTTP $code: $response")
@@ -122,9 +126,9 @@ Garde une complicité saine et respectueuse.
                 conn?.disconnect()
             }
 
-            if (attempt == 0) {
+            if (attempt < 2) {
                 try {
-                    Thread.sleep(600)
+                    Thread.sleep(500L * (attempt + 1))
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                     throw Exception("Connexion interrompue")
@@ -199,6 +203,18 @@ Garde une complicité saine et respectueuse.
         return """
 Tu écris au nom de Steve.
 Tu réponds en $language.
+
+QUALITÉ CONVERSATIONNELLE V40 :
+- Comprends le sens, le contexte et l'intention réelle du dernier message.
+- Réponds précisément, sans réponse générique ni répétition mécanique.
+- Adapte naturellement le ton, la longueur et le vocabulaire à la conversation.
+- Fais preuve d'écoute, d'empathie, de nuance et de spontanéité.
+- Utilise l'historique et la mémoire pour maintenir une continuité cohérente.
+- Ne pose une question que si elle apporte réellement quelque chose.
+- Évite les formulations artificielles et les introductions inutiles.
+- Ne prétends jamais connaître une information absente du contexte.
+- Conserve strictement la personnalité sélectionnée.
+
 ${personas[personality] ?: personas["connaissance"]}
 
 RÈGLES PERSONNELLES :

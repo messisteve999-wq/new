@@ -1,4 +1,4 @@
-name: Build NEW V39
+name: Build NEW V40
 
 on:
   push:
@@ -24,13 +24,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Build NEW V39
+      - name: Build NEW V40
         env:
           NEW_API_KEY: ${{ secrets.NEW_API_KEY }}
         run: gradle :app:assembleDebug --no-daemon
-      - name: Upload NEW V39 APK
+      - name: Upload NEW V40 APK
         uses: actions/upload-artifact@v4
         with:
-          name: NEW-V39-APK
+          name: NEW-V40-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
