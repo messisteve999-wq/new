@@ -23,9 +23,12 @@ class BubbleService : Service() {
     private lateinit var wm: WindowManager
     private lateinit var bubbleView: ImageView
     private lateinit var bubbleParams: WindowManager.LayoutParams
+    private lateinit var badgeView: TextView
+    private lateinit var badgeParams: WindowManager.LayoutParams
     private var panelRoot: LinearLayout? = null
     private var panelList: LinearLayout? = null
     private val refresher: () -> Unit = { panelList?.let { renderMessages(this, it, true) } }
+    private val badgeRefresher: () -> Unit = { updateUnreadBadge() }
 
     private val overlayType: Int
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -86,6 +89,9 @@ class BubbleService : Service() {
                     bubbleParams.x = (initX + dx).coerceIn(0, screenW - bubbleSize)
                     bubbleParams.y = (initY + dy).coerceIn(0, screenH - bubbleSize)
                     wm.updateViewLayout(bubbleView, bubbleParams)
+                    badgeParams.x = bubbleParams.x + dp(38)
+                    badgeParams.y = (bubbleParams.y - dp(4)).coerceAtLeast(0)
+                    wm.updateViewLayout(badgeView, badgeParams)
                     true
                 }
                 MotionEvent.ACTION_UP -> {
@@ -96,6 +102,42 @@ class BubbleService : Service() {
             }
         }
         wm.addView(bubbleView, bubbleParams)
+
+        Store.init(this)
+        val badgeSizeW = dp(30)
+        val badgeSizeH = dp(22)
+        badgeView = TextView(this).apply {
+            text = "0"
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            background = GradientDrawable().apply {
+                cornerRadius = dp(12).toFloat()
+                setColor(Color.parseColor("#FFFF1744"))
+                setStroke(dp(1), Color.WHITE)
+            }
+        }
+        badgeParams = WindowManager.LayoutParams(
+            badgeSizeW, badgeSizeH, overlayType,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = bubbleParams.x + dp(38)
+            y = (bubbleParams.y - dp(4)).coerceAtLeast(0)
+        }
+        wm.addView(badgeView, badgeParams)
+        Store.listeners.add(badgeRefresher)
+        updateUnreadBadge()
+    }
+
+    private fun updateUnreadBadge() {
+        val count = Store.unreadCount(this)
+        badgeView.text = if (count > 99) "99+" else count.toString()
+        badgeView.visibility = if (count > 0) android.view.View.VISIBLE
+                               else android.view.View.GONE
     }
 
     private fun togglePanel() {
@@ -184,12 +226,16 @@ class BubbleService : Service() {
     private fun bringBubbleToFront() {
         wm.removeView(bubbleView)
         wm.addView(bubbleView, bubbleParams)
+        wm.removeView(badgeView)
+        wm.addView(badgeView, badgeParams)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Store.listeners.remove(refresher)
+        Store.listeners.remove(badgeRefresher)
         panelRoot?.let { wm.removeView(it) }
+        wm.removeView(badgeView)
         wm.removeView(bubbleView)
     }
 }

@@ -1,4 +1,4 @@
-name: Build NEW V40
+name: Build NEW V41
 
 on:
   push:
@@ -15,22 +15,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Setup Gradle 8.11.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Build NEW V40
+
+      - name: Build NEW V41
         env:
           NEW_API_KEY: ${{ secrets.NEW_API_KEY }}
         run: gradle :app:assembleDebug --no-daemon
-      - name: Upload NEW V40 APK
+
+      - name: Upload NEW V41 APK
         uses: actions/upload-artifact@v4
         with:
-          name: NEW-V40-APK
+          name: NEW-V41-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

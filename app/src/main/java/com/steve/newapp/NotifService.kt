@@ -23,7 +23,8 @@ object Store {
         var suggestions: List<String> = emptyList(),
         var attachment: Uri? = null, var attachType: String? = null,
         val time: Long = System.currentTimeMillis(), val outgoing: Boolean = false,
-        var translation: String? = null, var pending: Runnable? = null
+        var translation: String? = null, var pending: Runnable? = null,
+        var read: Boolean = outgoing
     )
 
     val items = mutableListOf<Msg>()
@@ -54,7 +55,8 @@ object Store {
                     action = null,
                     pkg = o.getString("pkg"),
                     time = o.getLong("time"),
-                    outgoing = o.getBoolean("outgoing")
+                    outgoing = o.getBoolean("outgoing"),
+                    read = o.optBoolean("read", true)
                 ))
             }
         } catch (e: Exception) {
@@ -69,12 +71,46 @@ object Store {
         items.forEach { m ->
             arr.put(JSONObject()
                 .put("key", m.key).put("sender", m.sender).put("text", m.text)
-                .put("pkg", m.pkg).put("time", m.time).put("outgoing", m.outgoing))
+                .put("pkg", m.pkg).put("time", m.time).put("outgoing", m.outgoing)
+                .put("read", m.read))
         }
         try { f.writeText(arr.toString()) } catch (_: Exception) {}
     }
 
     fun add(m: Msg) { items.add(0, m); save(); refresh() }
+
+    // Applications actuellement synchronisées.
+    fun enabledApps(ctx: Context): Set<String> =
+        APPS.filterTo(mutableSetOf()) { pkg ->
+            Prefs.bool(ctx, "app_$pkg", true) &&
+                (pkg != "com.whatsapp.w4b" ||
+                    Prefs.bool(ctx, "include_business", true))
+        }
+
+    // Nombre de messages reçus non lus.
+    fun unreadCount(ctx: Context, pkg: String? = null): Int {
+        val enabled = enabledApps(ctx)
+        return items.count { m ->
+            !m.outgoing && !m.read &&
+                m.pkg in enabled &&
+                (pkg == null || m.pkg == pkg)
+        }
+    }
+
+    // Ouvrir une conversation dans NEW marque ses messages comme lus.
+    fun markConversationRead(pkg: String, sender: String) {
+        var changed = false
+        items.filter {
+            it.pkg == pkg && it.sender == sender && !it.outgoing && !it.read
+        }.forEach {
+            it.read = true
+            changed = true
+        }
+        if (changed) {
+            save()
+            refresh()
+        }
+    }
 
     // Historique complet : messages reçus et réponses envoyées par NEW.
     fun historyFrom(sender: String, count: Int = 30): List<String> =
