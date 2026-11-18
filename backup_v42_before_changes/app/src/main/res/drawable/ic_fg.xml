@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mot « Steve » en rouge, dessiné en lettres (traits), zone de sécurité centrée -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#D32F2F" android:strokeWidth="4"
+        android:strokeLineJoin="miter" android:strokeLineCap="square"
+        android:pathData="M35,40 H25 V53 H35 V66 H25" />
+    <path android:strokeColor="#D32F2F" android:strokeWidth="4"
+        android:strokeLineCap="square"
+        android:pathData="M41,40 V63 Q41,66 44,66 M37,49 H45" />
+    <path android:strokeColor="#D32F2F" android:strokeWidth="4"
+        android:strokeLineCap="square"
+        android:pathData="M57,48 H47 V66 H57 M47,57 H56" />
+    <path android:strokeColor="#D32F2F" android:strokeWidth="4"
+        android:strokeLineCap="square"
+        android:pathData="M60,48 L65,66 L70,48" />
+    <path android:strokeColor="#D32F2F" android:strokeWidth="4"
+        android:strokeLineCap="square"
+        android:pathData="M83,48 H73 V66 H83 M73,57 H82" />
+</vector>

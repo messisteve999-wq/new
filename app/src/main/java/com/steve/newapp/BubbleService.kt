@@ -53,7 +53,7 @@ class BubbleService : Service() {
 
         // Bulle sombre avec le démon rouge et un contour néon
         bubbleView = ImageView(this).apply {
-            setImageResource(R.drawable.new_robot_bubble)
+            setImageResource(R.drawable.ic_ai_bubble)
             scaleType = ImageView.ScaleType.CENTER_CROP
             setPadding(0, 0, 0, 0)
             background = GradientDrawable().apply {
