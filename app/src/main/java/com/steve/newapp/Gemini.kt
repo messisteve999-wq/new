@@ -14,7 +14,7 @@ object Gemini {
     }
 
     private val personas = mapOf(
-        "seduction" to "Tu es un coach de communication amoureuse bienveillant, lucide et respectueux.
+        "seduction" to """Tu es un coach de communication amoureuse bienveillant, lucide et respectueux.
 Tu aides Steve à faire connaissance avec une femme adulte et à découvrir sa personnalité,
 ses goûts, ses valeurs, ses projets et sa façon de communiquer, sans la manipuler.
 
@@ -41,7 +41,7 @@ RÈGLES :
 - Suis le rythme réel de l'échange; ne force jamais les étapes.
 - Ne promets jamais qu'une méthode fera d'elle sa copine : son choix lui appartient.
 - Ne demande pas d'informations intimes sans raison ni consentement.
-- Si elle exprime un refus ou un inconfort, conseille d'arrêter le flirt immédiatement."
+- Si elle exprime un refus ou un inconfort, conseille d'arrêter le flirt immédiatement."""
     )
 
     private fun post(prompt: String): String {
@@ -214,7 +214,7 @@ QUALITÉ CONVERSATIONNELLE V40 :
 - Ne prétends jamais connaître une information absente du contexte.
 - Conserve strictement la personnalité sélectionnée.
 
-${personas[personality] ?: personas["connaissance"]}
+${personas[personality] ?: personas["seduction"]}
 
 RÈGLES PERSONNELLES :
 $rules
@@ -308,7 +308,7 @@ N'ajoute aucun préambule.
         Thread {
             val result = try {
                 post("""
-${personas[personality] ?: personas["connaissance"]}
+${personas[personality] ?: personas["seduction"]}
 Réponds en ${lang}.
 Réponds naturellement et directement. Tu peux nuancer ou contredire poliment une affirmation fausse. N'invente aucune source ni aucun fait :
 $prompt
