@@ -255,6 +255,10 @@ class NotifService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val pkg = sbn.packageName
+
+        // Ignore explicitement toutes les notifications émises par NEW.
+        if (pkg == packageName) return
+
         if (pkg !in Store.APPS || !Prefs.bool(this, "app_$pkg", true)) return
         if (pkg == "com.whatsapp.w4b" && !Prefs.bool(this, "include_business", true)) return
 
