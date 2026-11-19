@@ -71,9 +71,12 @@ class SettingsActivity : Activity() {
                 Prefs.setText(ctx, "rules", rules.text.toString().trim())
                 Prefs.setText(ctx, "about", about.text.toString().trim())
                 val url = server.text.toString().trim()
-                if (url.startsWith("https://") || url.startsWith("http://127.0.0.1:8787/")) {
+                if (url.startsWith("https://") ||
+                    url == "http://127.0.0.1:3001/v1/generate" ||
+                    url.startsWith("http://127.0.0.1:8787/")) {
                     Prefs.setText(ctx, "server_url", url)
                     Gemini.endpoint = url
+                    Gemini.warmUp()
                 } else {
                     Toast.makeText(ctx, "Adresse du serveur invalide", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
