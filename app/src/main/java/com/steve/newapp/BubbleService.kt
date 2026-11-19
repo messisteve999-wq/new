@@ -51,15 +51,15 @@ class BubbleService : Service() {
         super.onCreate()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Bulle sombre avec le démon rouge et un contour néon
+        // Bulle ronde avec le robot IA 3D NEW V46
         bubbleView = ImageView(this).apply {
-            setImageResource(R.drawable.ic_ai_bubble)
+            setImageResource(R.drawable.new_v46_floating_robot)
             scaleType = ImageView.ScaleType.CENTER_CROP
             setPadding(0, 0, 0, 0)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.parseColor("#FF0B1F4A"))
-                setStroke(dp(2), Color.parseColor("#FF1744"))
+                setStroke(dp(2), Color.parseColor("#FF00BFFF"))
             }
             elevation = dp(8).toFloat()
         }
