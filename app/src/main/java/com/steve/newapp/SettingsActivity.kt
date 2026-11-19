@@ -57,6 +57,36 @@ class SettingsActivity : Activity() {
         col.addView(title("Avancé"))
         col.addView(sw("Inclure WhatsApp Business", "include_business", def = true))
         val server = field("Adresse du serveur Gemini", Prefs.text(ctx, "server_url").ifEmpty { Gemini.endpoint })
+
+        col.addView(title("CHANGER DE SERVEUR IA"))
+
+        col.addView(TextView(ctx).apply {
+            text = "Serveur actif : " +
+                ServerManager.label(Prefs.text(ctx, "server_choice", ServerManager.MY_IA_ID))
+            setTextColor(Color.BLACK)
+            textSize = 15f
+        })
+
+        col.addView(Button(ctx).apply {
+            text = "Utiliser MY_IA V2.2"
+            isAllCaps = false
+            setOnClickListener {
+                ServerManager.select(ctx, ServerManager.MY_IA_ID)
+                server.setText(ServerManager.MY_IA_V22)
+                Toast.makeText(ctx, "MY_IA V2.2 activé", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+        col.addView(Button(ctx).apply {
+            text = "Utiliser NEW-SERVER (Termux)"
+            isAllCaps = false
+            setOnClickListener {
+                ServerManager.select(ctx, ServerManager.NEW_SERVER_ID)
+                server.setText(ServerManager.NEW_SERVER)
+                Toast.makeText(ctx, "NEW-SERVER activé", Toast.LENGTH_SHORT).show()
+            }
+        })
+
         col.addView(server)
 
         col.addView(title("Assistant IA"))
